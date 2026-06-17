@@ -4,6 +4,8 @@ import os
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+URL = "https://bmkg-content-inatews.storage.googleapis.com/datagempa.json"
+
 
 def send_message(text):
     requests.post(
@@ -24,60 +26,52 @@ def read_last_id():
         return f.read().strip()
 
 
-def save_last_id(gempa_id):
+def save_last_id(event_id):
     with open("last_id.txt", "w") as f:
-        f.write(gempa_id)
+        f.write(event_id)
 
 
 try:
 
-    url = "https://bmkg-content-inatews.storage.googleapis.com/datagempa.json"
+    data = requests.get(URL, timeout=30).json()
 
-    data = requests.get(url, timeout=30).json()
+    info = data["info"]
 
-    gempa = data["features"][0]
-
-    prop = gempa["properties"]
-
-    gempa_id = prop["id"]
+    event_id = info["eventid"]
 
     last_id = read_last_id()
 
-    if gempa_id != last_id:
-
-        mag = prop["mag"]
-        lokasi = prop["place"]
-        kedalaman = prop["depth"]
-        waktu = prop["time"]
-        status = prop["status"]
+    if event_id != last_id:
 
         pesan = f"""
 🚨 GEMPA REALTIME InaTEWS
 
 📍 Lokasi
-{lokasi}
+{info['area']}
 
 📏 Magnitudo
-M {mag}
+M {info['magnitude']}
 
 📌 Kedalaman
-{kedalaman} km
+{info['depth']}
 
 🕒 Waktu
-{waktu}
+{info['date']} | {info['time']}
 
-📡 Status
-{status}
+📢 Dirasakan
+{info.get('felt', '-')}
+
+⚠ Potensi
+{info.get('potential', '-')}
 
 ━━━━━━━━━━━━━━
-⚠ Data awal InaTEWS BMKG
-
-Parameter dapat berubah
+Sumber: InaTEWS BMKG
+#GempaRealtime
 """
 
         send_message(pesan)
 
-        save_last_id(gempa_id)
+        save_last_id(event_id)
 
         print("GEMPA BARU DIKIRIM")
 
