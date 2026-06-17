@@ -31,13 +31,13 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python gempa.py
 
-      - name: Save History
-        run: |
-          git config --global user.name github-actions
-          git config --global user.email github-actions@github.com
+     # - name: Save History
+     #   run: |
+     #     git config --global user.name github-actions
+     #     git config --global user.email github-actions@github.com
 
-          git add last_id.txt
+     #     git add last_id.txt
 
-          git diff --cached --quiet || git commit -m "update"
+     #     git diff --cached --quiet || git commit -m "update"
 
-          git push
+     #     git push
