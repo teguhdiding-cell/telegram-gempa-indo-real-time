@@ -1,11 +1,13 @@
 import requests
 import os
+import time
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
 URL = "https://bmkg-content-inatews.storage.googleapis.com/datagempa.json"
 
+last_time = ""
 
 def send_message(text):
     requests.post(
@@ -17,14 +19,17 @@ def send_message(text):
         timeout=30
     )
 
+while True:
+    try:
+        data = requests.get(URL, timeout=30).json()
 
-try:
+        info = data["info"]
 
-    data = requests.get(URL, timeout=30).json()
+        gempa_id = f"{info['date']}_{info['time']}"
 
-    info = data["info"]
+        if gempa_id != last_time:
 
-    pesan = f"""🚨 GEMPA REALTIME InaTEWS
+            pesan = f"""🚨 GEMPA REALTIME InaTEWS
 
 📍 Lokasi
 {info['area']}
@@ -49,9 +54,16 @@ Sumber: InaTEWS BMKG
 #GempaRealtime
 """
 
-    send_message(pesan)
+            send_message(pesan)
 
-    print("PESAN TERKIRIM")
+            print("GEMPA BARU DIKIRIM")
 
-except Exception as e:
-    print("ERROR:", e)
+            last_time = gempa_id
+
+        else:
+            print("Tidak ada gempa baru")
+
+    except Exception as e:
+        print("ERROR:", e)
+
+    time.sleep(60)
