@@ -23,12 +23,12 @@ def send_message(text):
             timeout=30
         )
     except Exception as e:
-        print("ERROR SEND MESSAGE:", e)
+        print("SEND MESSAGE ERROR:", e)
 
 
 def send_photo(photo_url, caption):
     try:
-        requests.post(
+        r = requests.post(
             f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
             data={
                 "chat_id": CHAT_ID,
@@ -37,8 +37,12 @@ def send_photo(photo_url, caption):
             },
             timeout=30
         )
-    except Exception as e:
-        print("ERROR SEND PHOTO:", e)
+
+        if not r.ok:
+            send_message(caption)
+
+    except Exception:
+        send_message(caption)
 
 
 def format_wib(time_string):
@@ -50,13 +54,51 @@ def format_wib(time_string):
 
         wib_time = utc_time + timedelta(hours=7)
 
-        return wib_time.strftime("%d %b %Y • %H:%M:%S WIB")
+        bulan = {
+            1: "Januari",
+            2: "Februari",
+            3: "Maret",
+            4: "April",
+            5: "Mei",
+            6: "Juni",
+            7: "Juli",
+            8: "Agustus",
+            9: "September",
+            10: "Oktober",
+            11: "November",
+            12: "Desember"
+        }
+
+        return (
+            f"{wib_time.day} "
+            f"{bulan[wib_time.month]} "
+            f"{wib_time.year}\n"
+            f"{wib_time.strftime('%H:%M:%S')} WIB"
+        )
 
     except:
         return time_string
 
 
-print("Bot Gempa V3 berjalan...")
+def status_magnitudo(mag):
+
+    if mag < 3:
+        return "🟢 Minor"
+
+    elif mag < 5:
+        return "🟡 Ringan"
+
+    elif mag < 6:
+        return "🟠 Sedang"
+
+    elif mag < 7:
+        return "🔴 Kuat"
+
+    return "⚫ Besar"
+
+
+print("Bot Gempa Profesional V4 berjalan...")
+
 
 while True:
 
@@ -72,7 +114,7 @@ while True:
         current = {
             "id": p["id"],
             "mag": float(p["mag"]),
-            "fase": p["fase"],
+            "fase": str(p["fase"]),
             "depth": float(p["depth"]),
             "place": p["place"],
             "time": format_wib(p["time"]),
@@ -106,11 +148,13 @@ while True:
 
                 caption = (
                     "🚨 GEMPA REALTIME InaTEWS\n\n"
+
                     f"📍 Lokasi\n"
                     f"{current['place']}\n\n"
 
                     f"📏 Magnitudo\n"
-                    f"M {current['mag']:.1f}\n\n"
+                    f"M {current['mag']:.1f}\n"
+                    f"{status_magnitudo(current['mag'])}\n\n"
 
                     f"📌 Kedalaman\n"
                     f"{current['depth']:.1f} Km\n\n"
@@ -128,7 +172,7 @@ while True:
                     f"{current['time']}\n\n"
 
                     "━━━━━━━━━━━━━━\n"
-                    "Sumber: InaTEWS BMKG\n"
+                    "📡 Sumber: InaTEWS BMKG\n"
                     "#GempaRealtime"
                 )
 
@@ -136,21 +180,23 @@ while True:
 
                 print("GEMPA BARU DIKIRIM")
 
-            # UPDATE PARAMETER
             else:
 
                 perubahan = []
 
-                if current["mag"] != last_data["mag"]:
+                # filter perubahan penting saja
+
+                if abs(current["mag"] - last_data["mag"]) >= 0.1:
                     perubahan.append(
                         f"📏 Magnitudo\n"
                         f"{last_data['mag']:.2f} → {current['mag']:.2f}"
                     )
 
-                if current["depth"] != last_data["depth"]:
+                if abs(current["depth"] - last_data["depth"]) >= 1:
                     perubahan.append(
                         f"📌 Kedalaman\n"
-                        f"{last_data['depth']:.2f} Km → {current['depth']:.2f} Km"
+                        f"{last_data['depth']:.1f} Km → "
+                        f"{current['depth']:.1f} Km"
                     )
 
                 if current["fase"] != last_data["fase"]:
@@ -159,13 +205,19 @@ while True:
                         f"{last_data['fase']} → {current['fase']}"
                     )
 
-                if (
-                    current["lat"] != last_data["lat"]
-                    or
-                    current["lon"] != last_data["lon"]
-                ):
+                lat_changed = (
+                    abs(current["lat"] - last_data["lat"])
+                    >= 0.01
+                )
+
+                lon_changed = (
+                    abs(current["lon"] - last_data["lon"])
+                    >= 0.01
+                )
+
+                if lat_changed or lon_changed:
                     perubahan.append(
-                        "🌐 Koordinat diperbarui"
+                        "🌐 Lokasi episenter diperbarui"
                     )
 
                 if perubahan:
@@ -174,7 +226,7 @@ while True:
                         "🔄 UPDATE PARAMETER GEMPA\n\n"
                         + "\n\n".join(perubahan)
                         + "\n\n━━━━━━━━━━━━━━\n"
-                        + "Sumber: InaTEWS BMKG"
+                        + "📡 Sumber: InaTEWS BMKG"
                     )
 
                     send_message(pesan)
