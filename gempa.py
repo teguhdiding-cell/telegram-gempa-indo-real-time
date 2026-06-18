@@ -2,6 +2,7 @@ import requests
 import os
 import time
 from datetime import datetime, timedelta
+from geopy.geocoders import Nominatim
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -9,6 +10,8 @@ CHAT_ID = os.getenv("CHAT_ID")
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
 last_data = None
+
+geo_cache = {}
 
 
 # =====================================
@@ -184,8 +187,70 @@ def format_koordinat(lat, lon):
 
     return lat_txt, lon_txt
 
+# =====================================
+# GEOLOKASI V9
+# =====================================
 
-print("Bot Gempa V7 berjalan...")
+geolocator = Nominatim(
+    user_agent="gempa-realtime-v9"
+)
+
+def lokasi_detail(lat, lon):
+
+    key = (
+        round(lat, 2),
+        round(lon, 2)
+    )
+
+    if key in geo_cache:
+        return geo_cache[key]
+        
+    try:
+
+        lokasi = geolocator.reverse(
+            f"{lat},{lon}",
+            language="id",
+            timeout=10
+        )
+
+        if not lokasi:
+            return "Indonesia"
+
+        alamat = lokasi.raw["address"]
+
+        kabupaten = (
+            alamat.get("county")
+            or alamat.get("city")
+            or alamat.get("municipality")
+            or alamat.get("state_district")
+            or ""
+        )
+
+        provinsi = alamat.get("state", "")
+
+        hasil = []
+
+        if kabupaten:
+            hasil.append(kabupaten)
+
+        if provinsi:
+            hasil.append(provinsi)
+
+        if hasil:
+            hasil_text = "\n".join(hasil)
+            geo_cache[key] = hasil_text
+            return hasil_text
+
+        return lokasi.address
+
+    except Exception as e:
+
+        print("GEO ERROR:", e)
+
+        return "Indonesia"
+
+
+print("Bot Gempa V9 berjalan...")
 
 
 # =====================================
@@ -246,11 +311,16 @@ while True:
                     f"mt.{current['id']}.png"
                 )
 
+                lokasi_pro = lokasi_detail(
+                    current["lat"],
+                    current["lon"]
+                )
+
                 caption = f"""
 🚨 GEMPA REALTIME InaTEWS
 
 📍 Lokasi
-{current['place']}
+{lokasi_pro}
 
 📏 Magnitudo
 M {round(float(current['mag']),1)}
@@ -288,7 +358,7 @@ Fase ke-{current['fase']}
 
                 print("GEMPA BARU DIKIRIM")
 
-                if float(current["mag"]) >= 6.0:
+                if float(current["mag"]) >= 5.0:
 
                     send_message(
 f"""
@@ -296,7 +366,7 @@ f"""
 
 Magnitudo M{round(float(current['mag']),1)}
 
-📍 {current['place']}
+📍 {lokasi_pro}
 
 ⚠ Periksa informasi resmi BMKG untuk pembaruan selanjutnya.
 
@@ -338,20 +408,24 @@ Magnitudo M{round(float(current['mag']),1)}
 
                 koordinat_berubah = (
 
-                    current["lat"] != last_data["lat"]
+                    abs(current["lat"] - last_data["lat"]) >= 0.001
 
                     or
 
-                    current["lon"] != last_data["lon"]
+                    abs(current["lon"] - last_data["lon"]) >= 0.001
 
                 )
 
                 if koordinat_berubah:
 
+                    lokasi_baru = lokasi_detail(
+                        current["lat"],
+                        current["lon"]
+                    )
+
                     perubahan.append(
-                        f"🌐 Koordinat\n"
-                        f"{last_data['lat']:.4f}, {last_data['lon']:.4f}\n"
-                        f"→\n"
+                        f"🌐 Lokasi Episenter\n"
+                        f"{lokasi_baru}\n\n"
                         f"{current['lat']:.4f}, {current['lon']:.4f}"
                     )
 
