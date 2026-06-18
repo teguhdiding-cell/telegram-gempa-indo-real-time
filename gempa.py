@@ -11,17 +11,39 @@ last_data = None
 
 
 def send_message(text):
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={
-            "chat_id": CHAT_ID,
-            "text": text
-        },
-        timeout=30
-    )
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            data={
+                "chat_id": CHAT_ID,
+                "text": text,
+                "disable_web_page_preview": True
+            },
+            timeout=30
+        )
+    except Exception as e:
+        print("ERROR SEND MESSAGE:", e)
 
+
+def send_photo(photo_url, caption):
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
+            data={
+                "chat_id": CHAT_ID,
+                "photo": photo_url,
+                "caption": caption
+            },
+            timeout=30
+        )
+    except Exception as e:
+        print("ERROR SEND PHOTO:", e)
+
+
+print("Bot berjalan...")
 
 while True:
+
     try:
 
         data = requests.get(URL, timeout=30).json()
@@ -33,17 +55,19 @@ while True:
 
         current = {
             "id": p["id"],
-            "mag": p["mag"],
+            "mag": float(p["mag"]),
             "fase": p["fase"],
-            "depth": p["depth"],
-            "lat": g["coordinates"][1],
-            "lon": g["coordinates"][0],
+            "depth": float(p["depth"]),
             "place": p["place"],
-            "time": p["time"]
+            "time": p["time"],
+            "lat": float(g["coordinates"][1]),
+            "lon": float(g["coordinates"][0])
         }
 
         if last_data is None:
+
             last_data = current
+
             print("Data awal dimuat")
 
         else:
@@ -51,24 +75,32 @@ while True:
             # GEMPA BARU
             if current["id"] != last_data["id"]:
 
-                pesan = f"""🚨 GEMPA BARU InaTEWS
+                lat = round(current["lat"], 4)
+                lon = round(current["lon"], 4)
 
-🆔 {current['id']}
+                photo_url = (
+                    f"https://bmkg-content-inatews.storage.googleapis.com/"
+                    f"mt.{current['id']}.png"
+                )
 
-📍 {current['place']}
+                maps = f"https://maps.google.com/?q={lat},{lon}"
 
-📏 M {round(float(current['mag']),1)}
+                caption = (
+                    f"🚨 GEMPA REALTIME InaTEWS\n\n"
+                    f"🆔 ID\n{current['id']}\n\n"
+                    f"📍 Lokasi\n{current['place']}\n\n"
+                    f"📏 Magnitudo\nM {current['mag']:.1f}\n\n"
+                    f"📌 Kedalaman\n{current['depth']:.1f} Km\n\n"
+                    f"⚡ Fase\n{current['fase']}\n\n"
+                    f"🌐 Koordinat\n{lat}, {lon}\n\n"
+                    f"🗺 Google Maps\n{maps}\n\n"
+                    f"🕒 Waktu\n{current['time']}\n\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"Sumber: InaTEWS BMKG\n"
+                    f"#GempaRealtime"
+                )
 
-📌 Kedalaman {round(float(current['depth']),1)} Km
-
-⚡ Fase {current['fase']}
-
-🕒 {current['time']}
-
-#GempaRealtime
-"""
-
-                send_message(pesan)
+                send_photo(photo_url, caption)
 
                 print("GEMPA BARU DIKIRIM")
 
@@ -79,17 +111,17 @@ while True:
 
                 if current["mag"] != last_data["mag"]:
                     perubahan.append(
-                        f"Magnitudo: {last_data['mag']} → {current['mag']}"
+                        f"📏 Magnitudo: {last_data['mag']:.2f} → {current['mag']:.2f}"
                     )
 
                 if current["fase"] != last_data["fase"]:
                     perubahan.append(
-                        f"Fase: {last_data['fase']} → {current['fase']}"
+                        f"⚡ Fase: {last_data['fase']} → {current['fase']}"
                     )
 
                 if current["depth"] != last_data["depth"]:
                     perubahan.append(
-                        f"Kedalaman: {last_data['depth']} → {current['depth']}"
+                        f"📌 Kedalaman: {last_data['depth']:.2f} → {current['depth']:.2f} Km"
                     )
 
                 if (
@@ -98,14 +130,14 @@ while True:
                     current["lon"] != last_data["lon"]
                 ):
                     perubahan.append(
-                        "Koordinat diperbarui"
+                        f"🌐 Koordinat diperbarui"
                     )
 
                 if perubahan:
 
                     pesan = (
                         f"🔄 UPDATE PARAMETER\n\n"
-                        f"ID: {current['id']}\n\n"
+                        f"🆔 ID\n{current['id']}\n\n"
                         + "\n".join(perubahan)
                     )
 
@@ -116,6 +148,7 @@ while True:
             last_data = current
 
     except Exception as e:
+
         print("ERROR:", e)
 
     time.sleep(5)
