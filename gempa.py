@@ -312,35 +312,47 @@ Magnitudo M{round(float(current['mag']),1)}
 
                 perubahan = []
 
-                if current["mag"] != last_data["mag"]:
+                if abs(
+                    float(current["mag"])
+                    -
+                    float(last_data["mag"])
+                ) >= 0.1:
 
                     perubahan.append(
                         f"📏 Magnitudo\n"
-                        f"{last_data['mag']} → {current['mag']}"
+                        f"M{round(float(last_data['mag']),1)} → "
+                        f"M{round(float(current['mag']),1)}"
                     )
 
-                if current["depth"] != last_data["depth"]:
+                if abs(
+                    float(current["depth"])
+                    -
+                    float(last_data["depth"])
+                ) >= 1:
 
                     perubahan.append(
                         f"📌 Kedalaman\n"
-                        f"{last_data['depth']} Km → "
-                        f"{current['depth']} Km"
+                        f"{round(float(last_data['depth']),1)} Km → "
+                        f"{round(float(current['depth']),1)} Km"
                     )
 
                 koordinat_berubah = (
 
-                    abs(current["lat"] - last_data["lat"]) >= 0.01
+                    current["lat"] != last_data["lat"]
 
                     or
 
-                    abs(current["lon"] - last_data["lon"]) >= 0.01
+                    current["lon"] != last_data["lon"]
 
                 )
 
                 if koordinat_berubah:
 
                     perubahan.append(
-                        "🌐 Lokasi episenter diperbarui"
+                        f"🌐 Koordinat\n"
+                        f"{last_data['lat']:.4f}, {last_data['lon']:.4f}\n"
+                        f"→\n"
+                        f"{current['lat']:.4f}, {current['lon']:.4f}"
                     )
 
                 if perubahan:
