@@ -5,9 +5,10 @@ import time
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
-URL = "https://bmkg-content-inatews.storage.googleapis.com/datagempa.json"
+URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
-last_time = ""
+last_data = None
+
 
 def send_message(text):
     requests.post(
@@ -19,51 +20,102 @@ def send_message(text):
         timeout=30
     )
 
+
 while True:
     try:
+
         data = requests.get(URL, timeout=30).json()
 
-        info = data["info"]
+        gempa = data["features"][0]
 
-        gempa_id = f"{info['date']}_{info['time']}"
+        p = gempa["properties"]
+        g = gempa["geometry"]
 
-        if gempa_id != last_time:
+        current = {
+            "id": p["id"],
+            "mag": p["mag"],
+            "fase": p["fase"],
+            "depth": p["depth"],
+            "lat": g["coordinates"][1],
+            "lon": g["coordinates"][0],
+            "place": p["place"],
+            "time": p["time"]
+        }
 
-            pesan = f"""🚨 GEMPA REALTIME InaTEWS
+        if last_data is None:
+            last_data = current
+            print("Data awal dimuat")
 
-📍 Lokasi
-{info['area']}
+        else:
 
-📏 Magnitudo
-M {info['magnitude']}
+            # GEMPA BARU
+            if current["id"] != last_data["id"]:
 
-📌 Kedalaman
-{info['depth']}
+                pesan = f"""🚨 GEMPA BARU InaTEWS
 
-🕒 Waktu
-{info['date']} | {info['time']}
+🆔 {current['id']}
 
-📢 Dirasakan
-{info.get('felt', '-')}
+📍 {current['place']}
 
-⚠ Potensi
-{info.get('potential', '-')}
+📏 M {round(float(current['mag']),1)}
 
-━━━━━━━━━━━━━━
-Sumber: InaTEWS BMKG
+📌 Kedalaman {round(float(current['depth']),1)} Km
+
+⚡ Fase {current['fase']}
+
+🕒 {current['time']}
+
 #GempaRealtime
 """
 
-            send_message(pesan)
+                send_message(pesan)
 
-            print("GEMPA BARU DIKIRIM")
+                print("GEMPA BARU DIKIRIM")
 
-            last_time = gempa_id
+            # UPDATE PARAMETER
+            else:
 
-        else:
-            print("Tidak ada gempa baru")
+                perubahan = []
+
+                if current["mag"] != last_data["mag"]:
+                    perubahan.append(
+                        f"Magnitudo: {last_data['mag']} → {current['mag']}"
+                    )
+
+                if current["fase"] != last_data["fase"]:
+                    perubahan.append(
+                        f"Fase: {last_data['fase']} → {current['fase']}"
+                    )
+
+                if current["depth"] != last_data["depth"]:
+                    perubahan.append(
+                        f"Kedalaman: {last_data['depth']} → {current['depth']}"
+                    )
+
+                if (
+                    current["lat"] != last_data["lat"]
+                    or
+                    current["lon"] != last_data["lon"]
+                ):
+                    perubahan.append(
+                        "Koordinat diperbarui"
+                    )
+
+                if perubahan:
+
+                    pesan = (
+                        f"🔄 UPDATE PARAMETER\n\n"
+                        f"ID: {current['id']}\n\n"
+                        + "\n".join(perubahan)
+                    )
+
+                    send_message(pesan)
+
+                    print("UPDATE PARAMETER")
+
+            last_data = current
 
     except Exception as e:
         print("ERROR:", e)
 
-    time.sleep(60)
+    time.sleep(5)
