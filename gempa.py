@@ -34,15 +34,26 @@ def send_photo(photo_url, caption):
 
     try:
 
-        requests.post(
-            f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
-            data={
-                "chat_id": CHAT_ID,
-                "photo": photo_url,
-                "caption": caption
-            },
-            timeout=30
+        cek = requests.head(
+            photo_url,
+            timeout=10
         )
+
+        if cek.status_code == 200:
+
+            requests.post(
+                f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
+                data={
+                    "chat_id": CHAT_ID,
+                    "photo": photo_url,
+                    "caption": caption
+                },
+                timeout=30
+            )
+
+        else:
+
+            send_message(caption)
 
     except Exception as e:
 
@@ -143,12 +154,15 @@ def energi_tnt(mag):
     tnt = joule / 4.184e9
 
     if tnt < 1:
-        return f"≈ {tnt:.2f} ton TNT"
+
+        return f"≈ {tnt*1000:.0f} kg TNT"
 
     elif tnt < 1000:
-        return f"≈ {tnt:.0f} ton TNT"
+
+        return f"≈ {tnt:.1f} ton TNT"
 
     else:
+
         return f"≈ {tnt/1000:.1f} kiloton TNT"
 
 
@@ -274,19 +288,19 @@ Fase ke-{current['fase']}
 
                 print("GEMPA BARU DIKIRIM")
 
-                if float(current["mag"]) >= 5.0:
+                if float(current["mag"]) >= 6.0:
 
                     send_message(
 f"""
-🚨 GEMPA SIGNIFIKAN
+🚨 GEMPA KUAT
 
 Magnitudo M{round(float(current['mag']),1)}
 
 📍 {current['place']}
 
-⚠ Pantau informasi resmi BMKG.
+⚠ Periksa informasi resmi BMKG untuk pembaruan selanjutnya.
 
-#GempaSignifikan
+#GempaKuat
 """
                     )
 
@@ -313,21 +327,13 @@ Magnitudo M{round(float(current['mag']),1)}
                         f"{current['depth']} Km"
                     )
 
-                if current["fase"] != last_data["fase"]:
-
-                    perubahan.append(
-                        f"⚡ Fase Analisis\n"
-                        f"{last_data['fase']} → "
-                        f"{current['fase']}"
-                    )
-
                 koordinat_berubah = (
 
-                    current["lat"] != last_data["lat"]
+                    abs(current["lat"] - last_data["lat"]) >= 0.01
 
                     or
 
-                    current["lon"] != last_data["lon"]
+                    abs(current["lon"] - last_data["lon"]) >= 0.01
 
                 )
 
