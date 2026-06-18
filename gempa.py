@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+from datetime import datetime, timedelta
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -40,7 +41,22 @@ def send_photo(photo_url, caption):
         print("ERROR SEND PHOTO:", e)
 
 
-print("Bot berjalan...")
+def format_wib(time_string):
+    try:
+        utc_time = datetime.strptime(
+            time_string.split(".")[0],
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        wib_time = utc_time + timedelta(hours=7)
+
+        return wib_time.strftime("%d %b %Y • %H:%M:%S WIB")
+
+    except:
+        return time_string
+
+
+print("Bot Gempa V3 berjalan...")
 
 while True:
 
@@ -59,7 +75,7 @@ while True:
             "fase": p["fase"],
             "depth": float(p["depth"]),
             "place": p["place"],
-            "time": p["time"],
+            "time": format_wib(p["time"]),
             "lat": float(g["coordinates"][1]),
             "lon": float(g["coordinates"][0])
         }
@@ -78,26 +94,42 @@ while True:
                 lat = round(current["lat"], 4)
                 lon = round(current["lon"], 4)
 
+                maps = (
+                    f"https://maps.google.com/?q="
+                    f"{lat},{lon}"
+                )
+
                 photo_url = (
-                    f"https://bmkg-content-inatews.storage.googleapis.com/"
+                    "https://bmkg-content-inatews.storage.googleapis.com/"
                     f"mt.{current['id']}.png"
                 )
 
-                maps = f"https://maps.google.com/?q={lat},{lon}"
-
                 caption = (
-                    f"🚨 GEMPA REALTIME InaTEWS\n\n"
-                    f"🆔 ID\n{current['id']}\n\n"
-                    f"📍 Lokasi\n{current['place']}\n\n"
-                    f"📏 Magnitudo\nM {current['mag']:.1f}\n\n"
-                    f"📌 Kedalaman\n{current['depth']:.1f} Km\n\n"
-                    f"⚡ Fase\n{current['fase']}\n\n"
-                    f"🌐 Koordinat\n{lat}, {lon}\n\n"
-                    f"🗺 Google Maps\n{maps}\n\n"
-                    f"🕒 Waktu\n{current['time']}\n\n"
-                    f"━━━━━━━━━━━━━━\n"
-                    f"Sumber: InaTEWS BMKG\n"
-                    f"#GempaRealtime"
+                    "🚨 GEMPA REALTIME InaTEWS\n\n"
+                    f"📍 Lokasi\n"
+                    f"{current['place']}\n\n"
+
+                    f"📏 Magnitudo\n"
+                    f"M {current['mag']:.1f}\n\n"
+
+                    f"📌 Kedalaman\n"
+                    f"{current['depth']:.1f} Km\n\n"
+
+                    f"⚡ Fase Analisis\n"
+                    f"{current['fase']}\n\n"
+
+                    f"🌐 Koordinat\n"
+                    f"{lat}, {lon}\n\n"
+
+                    f"🗺 Google Maps\n"
+                    f"{maps}\n\n"
+
+                    f"🕒 Waktu Kejadian\n"
+                    f"{current['time']}\n\n"
+
+                    "━━━━━━━━━━━━━━\n"
+                    "Sumber: InaTEWS BMKG\n"
+                    "#GempaRealtime"
                 )
 
                 send_photo(photo_url, caption)
@@ -111,17 +143,20 @@ while True:
 
                 if current["mag"] != last_data["mag"]:
                     perubahan.append(
-                        f"📏 Magnitudo: {last_data['mag']:.2f} → {current['mag']:.2f}"
-                    )
-
-                if current["fase"] != last_data["fase"]:
-                    perubahan.append(
-                        f"⚡ Fase: {last_data['fase']} → {current['fase']}"
+                        f"📏 Magnitudo\n"
+                        f"{last_data['mag']:.2f} → {current['mag']:.2f}"
                     )
 
                 if current["depth"] != last_data["depth"]:
                     perubahan.append(
-                        f"📌 Kedalaman: {last_data['depth']:.2f} → {current['depth']:.2f} Km"
+                        f"📌 Kedalaman\n"
+                        f"{last_data['depth']:.2f} Km → {current['depth']:.2f} Km"
+                    )
+
+                if current["fase"] != last_data["fase"]:
+                    perubahan.append(
+                        f"⚡ Fase Analisis\n"
+                        f"{last_data['fase']} → {current['fase']}"
                     )
 
                 if (
@@ -130,15 +165,16 @@ while True:
                     current["lon"] != last_data["lon"]
                 ):
                     perubahan.append(
-                        f"🌐 Koordinat diperbarui"
+                        "🌐 Koordinat diperbarui"
                     )
 
                 if perubahan:
 
                     pesan = (
-                        f"🔄 UPDATE PARAMETER\n\n"
-                        f"🆔 ID\n{current['id']}\n\n"
-                        + "\n".join(perubahan)
+                        "🔄 UPDATE PARAMETER GEMPA\n\n"
+                        + "\n\n".join(perubahan)
+                        + "\n\n━━━━━━━━━━━━━━\n"
+                        + "Sumber: InaTEWS BMKG"
                     )
 
                     send_message(pesan)
