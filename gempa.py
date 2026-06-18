@@ -296,6 +296,13 @@ while True:
 
             if current["id"] != last_data["id"]:
 
+                 print(
+                    "ID BARU:",
+                    last_data["id"],
+                    "->",
+                    current["id"]
+                )
+                
                 lat_txt, lon_txt = format_koordinat(
                     current["lat"],
                     current["lon"]
