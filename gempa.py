@@ -11,9 +11,9 @@ URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 last_data = None
 
 
-# =========================
+# =====================================
 # TELEGRAM
-# =========================
+# =====================================
 
 def send_message(text):
     try:
@@ -31,9 +31,10 @@ def send_message(text):
 
 
 def send_photo(photo_url, caption):
+
     try:
 
-        r = requests.post(
+        requests.post(
             f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
             data={
                 "chat_id": CHAT_ID,
@@ -43,61 +44,58 @@ def send_photo(photo_url, caption):
             timeout=30
         )
 
-        if not r.ok:
-            send_message(caption)
+    except Exception as e:
 
-    except:
+        print("SEND PHOTO ERROR:", e)
+
         send_message(caption)
 
 
-# =========================
-# FORMAT WAKTU WIB
-# =========================
+# =====================================
+# WIB
+# =====================================
 
-def format_wib(time_string):
+def waktu_wib(time_str):
 
     try:
 
-        utc_time = datetime.strptime(
-            time_string.split(".")[0],
-            "%Y-%m-%d %H:%M:%S"
+        dt = datetime.fromisoformat(
+            time_str.replace(" ", "T")
         )
 
-        wib_time = utc_time + timedelta(hours=7)
+        dt += timedelta(hours=7)
 
-        bulan = {
-            1: "Januari",
-            2: "Februari",
-            3: "Maret",
-            4: "April",
-            5: "Mei",
-            6: "Juni",
-            7: "Juli",
-            8: "Agustus",
-            9: "September",
-            10: "Oktober",
-            11: "November",
-            12: "Desember"
-        }
+        bulan = [
+            "Januari","Februari","Maret",
+            "April","Mei","Juni",
+            "Juli","Agustus","September",
+            "Oktober","November","Desember"
+        ]
 
         return (
-            f"{wib_time.day} "
-            f"{bulan[wib_time.month]} "
-            f"{wib_time.year}\n"
-            f"{wib_time.strftime('%H:%M:%S')} WIB"
+            f"{dt.day} "
+            f"{bulan[dt.month-1]} "
+            f"{dt.year}\n"
+            f"{dt.strftime('%H:%M:%S')} WIB"
         )
 
     except:
-        return time_string
+
+        return time_str
 
 
-# =========================
-# STATUS MAGNITUDO
-# =========================
+# =====================================
+# KATEGORI MAGNITUDO
+# =====================================
 
-def status_magnitudo(mag):
+def kategori_mag(mag):
 
-    if mag < 3:
+    mag = float(mag)
+
+    if mag < 2:
+        return "⚪ Mikro"
+
+    elif mag < 4:
         return "🟢 Minor"
 
     elif mag < 5:
@@ -109,51 +107,76 @@ def status_magnitudo(mag):
     elif mag < 7:
         return "🔴 Kuat"
 
-    return "⚫ Besar"
+    elif mag < 8:
+        return "🟣 Mayor"
+
+    return "⚫ Great Earthquake"
 
 
-# =========================
-# STATUS KEDALAMAN
-# =========================
+# =====================================
+# KEDALAMAN
+# =====================================
 
-def status_kedalaman(depth):
+def kategori_depth(depth):
 
-    if depth < 60:
+    depth = float(depth)
+
+    if depth < 70:
         return "🔹 Gempa Dangkal"
 
     elif depth < 300:
-        return "🔸 Gempa Menengah"
+        return "🔷 Gempa Menengah"
 
-    return "🔴 Gempa Dalam"
+    return "🔶 Gempa Dalam"
 
 
-# =========================
-# ESTIMASI ENERGI
-# =========================
+# =====================================
+# ENERGI
+# =====================================
 
 def energi_tnt(mag):
 
-    try:
+    mag = float(mag)
 
-        joule = 10 ** (1.5 * mag + 4.8)
+    joule = 10 ** (1.5 * mag + 4.8)
 
-        tnt = joule / 4.184e9
+    tnt = joule / 4.184e9
 
-        if tnt >= 1000:
-            return f"≈ {tnt/1000:.1f} kiloton TNT"
+    if tnt < 1:
+        return f"≈ {tnt:.2f} ton TNT"
 
+    elif tnt < 1000:
         return f"≈ {tnt:.0f} ton TNT"
 
-    except:
-        return "-"
+    else:
+        return f"≈ {tnt/1000:.1f} kiloton TNT"
 
 
-print("Bot Gempa Profesional V5 berjalan...")
+# =====================================
+# KOORDINAT
+# =====================================
+
+def format_koordinat(lat, lon):
+
+    if lat < 0:
+        lat_txt = f"{abs(lat):.4f} LS"
+    else:
+        lat_txt = f"{lat:.4f} LU"
+
+    if lon < 0:
+        lon_txt = f"{abs(lon):.4f} BB"
+    else:
+        lon_txt = f"{lon:.4f} BT"
+
+    return lat_txt, lon_txt
 
 
-# =========================
+print("Bot Gempa V7 berjalan...")
+
+
+# =====================================
 # LOOP
-# =========================
+# =====================================
 
 while True:
 
@@ -169,19 +192,13 @@ while True:
         current = {
 
             "id": p["id"],
-
-            "mag": float(p["mag"]),
-
-            "fase": str(p["fase"]),
-
-            "depth": float(p["depth"]),
-
+            "mag": p["mag"],
+            "fase": p["fase"],
+            "depth": p["depth"],
             "place": p["place"],
-
-            "time": format_wib(p["time"]),
+            "time": p["time"],
 
             "lat": float(g["coordinates"][1]),
-
             "lon": float(g["coordinates"][0])
 
         }
@@ -194,18 +211,20 @@ while True:
 
         else:
 
-            # =====================
+            # =================================
             # GEMPA BARU
-            # =====================
+            # =================================
 
             if current["id"] != last_data["id"]:
 
-                lat = round(current["lat"], 4)
-                lon = round(current["lon"], 4)
+                lat_txt, lon_txt = format_koordinat(
+                    current["lat"],
+                    current["lon"]
+                )
 
                 maps = (
                     f"https://maps.google.com/?q="
-                    f"{lat},{lon}"
+                    f"{current['lat']},{current['lon']}"
                 )
 
                 photo_url = (
@@ -213,98 +232,106 @@ while True:
                     f"mt.{current['id']}.png"
                 )
 
-                caption = (
+                caption = f"""
+🚨 GEMPA REALTIME InaTEWS
 
-                    "🚨 GEMPA REALTIME InaTEWS\n\n"
+📍 Lokasi
+{current['place']}
 
-                    f"📍 Lokasi\n"
-                    f"{current['place']}\n\n"
+📏 Magnitudo
+M {round(float(current['mag']),1)}
 
-                    f"📏 Magnitudo\n"
-                    f"M {current['mag']:.1f}\n"
-                    f"{status_magnitudo(current['mag'])}\n\n"
+{kategori_mag(current['mag'])}
 
-                    f"📌 Kedalaman\n"
-                    f"{current['depth']:.1f} Km\n"
-                    f"{status_kedalaman(current['depth'])}\n\n"
+📌 Kedalaman
+{round(float(current['depth']),1)} Km
 
-                    f"⚡ Energi Relatif\n"
-                    f"{energi_tnt(current['mag'])}\n\n"
+{kategori_depth(current['depth'])}
 
-                    f"⚡ Fase Analisis\n"
-                    f"{current['fase']}\n\n"
+⚡ Energi Relatif
+{energi_tnt(current['mag'])}
 
-                    f"🌐 Koordinat\n"
-                    f"{lat}, {lon}\n\n"
+⚡ Status Analisis
+Fase ke-{current['fase']}
 
-                    f"🗺 Lihat Lokasi\n"
-                    f"{maps}\n\n"
+🌐 Koordinat
 
-                    f"🕒 Waktu Kejadian\n"
-                    f"{current['time']}\n\n"
+{lat_txt}
+{lon_txt}
 
-                    "━━━━━━━━━━━━━━\n"
-                    "📡 Sumber: InaTEWS BMKG\n"
-                    "#GempaRealtime"
+🗺 Lihat Lokasi
+{maps}
 
-                )
+🕒 Waktu Kejadian
+{waktu_wib(current['time'])}
+
+━━━━━━━━━━━━━━
+🛰 Sumber: InaTEWS BMKG
+#GempaRealtime
+"""
 
                 send_photo(photo_url, caption)
 
                 print("GEMPA BARU DIKIRIM")
 
-            # =====================
+                if float(current["mag"]) >= 5.0:
+
+                    send_message(
+f"""
+🚨 GEMPA SIGNIFIKAN
+
+Magnitudo M{round(float(current['mag']),1)}
+
+📍 {current['place']}
+
+⚠ Pantau informasi resmi BMKG.
+
+#GempaSignifikan
+"""
+                    )
+
+            # =================================
             # UPDATE PARAMETER
-            # =====================
+            # =================================
 
             else:
 
                 perubahan = []
 
-                if abs(current["mag"] - last_data["mag"]) >= 0.1:
+                if current["mag"] != last_data["mag"]:
 
                     perubahan.append(
-
                         f"📏 Magnitudo\n"
-                        f"{last_data['mag']:.2f}\n"
-                        f"⬇\n"
-                        f"{current['mag']:.2f}"
-
+                        f"{last_data['mag']} → {current['mag']}"
                     )
 
-                if abs(current["depth"] - last_data["depth"]) >= 1:
+                if current["depth"] != last_data["depth"]:
 
                     perubahan.append(
-
                         f"📌 Kedalaman\n"
-                        f"{last_data['depth']:.1f} Km\n"
-                        f"⬇\n"
-                        f"{current['depth']:.1f} Km"
-
+                        f"{last_data['depth']} Km → "
+                        f"{current['depth']} Km"
                     )
 
                 if current["fase"] != last_data["fase"]:
 
                     perubahan.append(
-
                         f"⚡ Fase Analisis\n"
-                        f"{last_data['fase']}\n"
-                        f"⬇\n"
+                        f"{last_data['fase']} → "
                         f"{current['fase']}"
-
                     )
 
-                lat_changed = (
-                    abs(current["lat"] - last_data["lat"])
-                    >= 0.01
+                koordinat_berubah = (
+
+                    current["lat"] != last_data["lat"]
+
+                    or
+
+                    current["lon"] != last_data["lon"]
+
                 )
 
-                lon_changed = (
-                    abs(current["lon"] - last_data["lon"])
-                    >= 0.01
-                )
-
-                if lat_changed or lon_changed:
+                if koordinat_berubah:
 
                     perubahan.append(
                         "🌐 Lokasi episenter diperbarui"
@@ -312,15 +339,20 @@ while True:
 
                 if perubahan:
 
+                    maps = (
+                        f"https://maps.google.com/?q="
+                        f"{current['lat']},{current['lon']}"
+                    )
+
                     pesan = (
-
-                        "🔄 PEMBARUAN ANALISIS GEMPA\n\n"
-
+                        "🔄 UPDATE PARAMETER GEMPA\n\n"
                         + "\n\n".join(perubahan)
-
-                        + "\n\n━━━━━━━━━━━━━━\n"
-                        + "📡 Sumber: InaTEWS BMKG"
-
+                        + "\n\n🗺 Google Maps"
+                        + f"\n{maps}"
+                        + "\n\n🕒 Waktu Analisis"
+                        + f"\n{waktu_wib(current['time'])}"
+                        + "\n\n━━━━━━━━━━━━━━"
+                        + "\n🛰 Sumber: InaTEWS BMKG"
                     )
 
                     send_message(pesan)
