@@ -296,7 +296,7 @@ while True:
 
             if current["id"] != last_data["id"]:
 
-                 print(
+                print(
                     "ID BARU:",
                     last_data["id"],
                     "->",
