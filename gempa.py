@@ -49,6 +49,16 @@ def send_photo(photo_url, caption):
             timeout=10
         )
 
+        print(
+            "PHOTO URL:",
+            photo_url
+        )
+
+        print(
+            "PHOTO STATUS:",
+            cek.status_code
+        )
+
         if cek.status_code == 200:
 
             r = requests.post(
