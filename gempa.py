@@ -11,6 +11,8 @@ URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
 last_data = None
 
+last_event_key = None
+
 geo_cache = {}
 
 
@@ -47,16 +49,6 @@ def send_photo(photo_url, caption):
         cek = requests.head(
             photo_url,
             timeout=10
-        )
-
-        print(
-            "PHOTO URL:",
-            photo_url
-        )
-
-        print(
-            "PHOTO STATUS:",
-            cek.status_code
         )
 
         if cek.status_code == 200:
@@ -304,9 +296,16 @@ while True:
 
         }
 
+        event_key = (
+            current["time"],
+            round(current["lat"], 1),
+            round(current["lon"], 1)
+        )
+        
         if last_data is None:
 
             last_data = current
+            last_event_key = event_key
 
             print("Data awal dimuat")
 
@@ -316,7 +315,7 @@ while True:
             # GEMPA BARU
             # =================================
 
-            if current["id"] != last_data["id"]:
+            if event_key != last_event_key:
 
                 print(
                     "ID BARU:",
@@ -383,14 +382,9 @@ Fase ke-{current['fase']}
 #GempaRealtime
 """
 
-                send_photo(photo_url, caption)
+                send_message(caption)
 
                 print("GEMPA BARU DIKIRIM")
-
-                print(
-                    "PID:",
-                    os.getpid()
-                )
 
                 if float(current["mag"]) >= 5.0:
 
@@ -485,12 +479,9 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     print("UPDATE PARAMETER")
 
-                    print(
-                        "PID:",
-                        os.getpid()
-                    )
 
-            last_data = current
+                last_data = current
+                last_event_key = event_key
 
     except Exception as e:
 
