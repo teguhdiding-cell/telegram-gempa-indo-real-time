@@ -11,8 +11,6 @@ URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
 last_data = None
 
-last_event_key = None
-
 geo_cache = {}
 
 
@@ -284,13 +282,9 @@ while True:
 
         }
 
-        event_key = current["time"]
-
         if last_data is None:
 
             last_data = current
-
-            last_event_key = event_key
 
             print("Data awal dimuat")
 
@@ -300,7 +294,7 @@ while True:
             # GEMPA BARU
             # =================================
 
-            if event_key != last_event_key:
+            if current["id"] != last_data["id"]:
 
                 print(
                     "ID BARU:",
@@ -465,8 +459,6 @@ Magnitudo M{round(float(current['mag']),1)}
                     print("UPDATE PARAMETER")
 
             last_data = current
-
-            last_event_key = event_key
 
     except Exception as e:
 
