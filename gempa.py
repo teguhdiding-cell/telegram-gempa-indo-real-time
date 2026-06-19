@@ -13,7 +13,48 @@ last_data = None
 
 last_event_key = None
 
+LAST_ID_FILE = "last_id.txt"
+
 geo_cache = {}
+
+
+# =====================================
+# LAST ID CACHE
+# =====================================
+
+def load_last_id():
+
+    try:
+
+        with open(
+            LAST_ID_FILE,
+            "r"
+        ) as f:
+
+            return f.read().strip()
+
+    except:
+
+        return None
+
+
+def save_last_id(gempa_id):
+
+    try:
+
+        with open(
+            LAST_ID_FILE,
+            "w"
+        ) as f:
+
+            f.write(gempa_id)
+
+    except Exception as e:
+
+        print(
+            "SAVE ID ERROR:",
+            e
+        )
 
 
 # =====================================
@@ -265,6 +306,13 @@ def lokasi_detail(lat, lon):
 
 
 print("Bot Gempa V9 berjalan...")
+
+cached_id = load_last_id()
+
+print(
+    "LAST ID CACHE:",
+    cached_id
+)
 
 
 # =====================================
