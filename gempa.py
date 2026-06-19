@@ -355,6 +355,26 @@ while True:
         
         if last_data is None:
 
+            if cached_id:
+
+                print(
+                    "CACHE FOUND:",
+                    cached_id
+                )
+
+            else:
+
+                save_last_id(
+                    current["id"]
+                )
+
+                cached_id = current["id"]
+
+                print(
+                    "CACHE INIT:",
+                    current["id"]
+                )
+
             last_data = current
             last_event_key = event_key
 
@@ -533,6 +553,10 @@ Magnitudo M{round(float(current['mag']),1)}
 
             last_data = current
             last_event_key = event_key
+
+            save_last_id(
+                current["id"]
+            )
 
             print(
                 "CACHE UPDATED:",
