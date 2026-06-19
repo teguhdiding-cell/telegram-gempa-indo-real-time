@@ -480,9 +480,14 @@ Magnitudo M{round(float(current['mag']),1)}
                     print("UPDATE PARAMETER")
 
 
-                last_data = current
-                last_event_key = event_key
+            last_data = current
+            last_event_key = event_key
 
+            print(
+                "CACHE UPDATED:",
+                current["id"]
+            )
+    
     except Exception as e:
 
         print("ERROR:", e)
