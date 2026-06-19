@@ -296,7 +296,14 @@ while True:
 
         }
 
-        event_key = current["time"]
+        event_key = current["id"]
+
+        print(
+            "EVENT:",
+            event_key,
+            "| LAST:",
+            last_event_key
+        )
         
         if last_data is None:
 
@@ -311,7 +318,7 @@ while True:
             # GEMPA BARU
             # =================================
 
-            if event_key != last_event_key:
+            if current["id"] != last_data["id"]:
 
                 print(
                     "ID BARU:",
