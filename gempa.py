@@ -379,7 +379,7 @@ Fase ke-{current['fase']}
 
 ━━━━━━━━━━━━━━
 🛰 Sumber: InaTEWS BMKG
-#GempaRealtime
+#GEMPAdanCUACA
 """
 
                 send_message(caption)
