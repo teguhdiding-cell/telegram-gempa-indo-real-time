@@ -20,7 +20,8 @@ geo_cache = {}
 
 def send_message(text):
     try:
-        requests.post(
+
+        r = requests.post(
             f"https://api.telegram.org/bot{TOKEN}/sendMessage",
             data={
                 "chat_id": CHAT_ID,
@@ -29,6 +30,12 @@ def send_message(text):
             },
             timeout=30
         )
+
+        print(
+            "TELEGRAM MESSAGE:",
+            r.status_code
+        )
+
     except Exception as e:
         print("SEND MESSAGE ERROR:", e)
 
@@ -44,7 +51,7 @@ def send_photo(photo_url, caption):
 
         if cek.status_code == 200:
 
-            requests.post(
+            r = requests.post(
                 f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
                 data={
                     "chat_id": CHAT_ID,
@@ -52,6 +59,11 @@ def send_photo(photo_url, caption):
                     "caption": caption
                 },
                 timeout=30
+            )
+
+            print(
+                "TELEGRAM PHOTO:",
+                r.status_code
             )
 
         else:
