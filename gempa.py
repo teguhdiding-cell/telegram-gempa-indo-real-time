@@ -365,6 +365,11 @@ Fase ke-{current['fase']}
 
                 print("GEMPA BARU DIKIRIM")
 
+                print(
+                    "PID:",
+                    os.getpid()
+                )
+
                 if float(current["mag"]) >= 5.0:
 
                     send_message(
@@ -457,6 +462,11 @@ Magnitudo M{round(float(current['mag']),1)}
                     send_message(pesan)
 
                     print("UPDATE PARAMETER")
+
+                    print(
+                        "PID:",
+                        os.getpid()
+                    )
 
             last_data = current
 
