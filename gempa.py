@@ -386,7 +386,7 @@ while True:
             # GEMPA BARU
             # =================================
 
-            if current["id"] != last_data["id"]:
+            if current["id"] != cached_id:
 
                 print(
                     "ID BARU:",
@@ -456,6 +456,14 @@ Fase ke-{current['fase']}
                 send_message(caption)
 
                 print("GEMPA BARU DIKIRIM")
+
+                save_last_id(current["id"])
+                cached_id = current["id"]
+
+                print(
+                    "CACHE DISIMPAN:",
+                    current["id"]
+                )
 
                 if float(current["mag"]) >= 5.0:
 
@@ -553,15 +561,6 @@ Magnitudo M{round(float(current['mag']),1)}
 
             last_data = current
             last_event_key = event_key
-
-            save_last_id(
-                current["id"]
-            )
-
-            print(
-                "CACHE UPDATED:",
-                current["id"]
-            )
     
     except Exception as e:
 
