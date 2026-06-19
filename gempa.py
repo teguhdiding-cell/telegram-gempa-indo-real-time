@@ -296,11 +296,7 @@ while True:
 
         }
 
-        event_key = (
-            current["time"],
-            round(current["lat"], 1),
-            round(current["lon"], 1)
-        )
+        event_key = current["time"]
         
         if last_data is None:
 
