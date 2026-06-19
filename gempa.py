@@ -284,18 +284,8 @@ while True:
 
         }
 
-        event_key = (
+        event_key = current["time"]
 
-            current["time"],
-
-            round(float(current["mag"]), 1),
-
-            round(current["lat"], 2),
-
-            round(current["lon"], 2)
-
-        )
-        
         if last_data is None:
 
             last_data = current
