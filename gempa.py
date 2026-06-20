@@ -310,6 +310,50 @@ def post_facebook(message, image_url=None):
             e
         )
 
+def edit_facebook_post(post_id, message):
+
+    try:
+
+        if not post_id:
+            return
+
+        url = (
+            f"https://graph.facebook.com/v25.0/"
+            f"{post_id}"
+        )
+
+        payload = {
+            "message": message,
+            "access_token": FB_PAGE_TOKEN
+        }
+
+        r = requests.post(
+            url,
+            data=payload,
+            timeout=30
+        )
+
+        print(
+            "FACEBOOK EDIT:",
+            r.status_code
+        )
+
+        print(
+            "FACEBOOK EDIT RESPONSE:",
+            r.text
+        )
+
+        if r.status_code == 200:
+
+            save_fb_post_text(message)
+
+    except Exception as e:
+
+        print(
+            "FACEBOOK EDIT ERROR:",
+            e
+        )
+
 
 # ==========================
 # SHAKEMAP
@@ -767,9 +811,11 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     send_message(pesan)
 
-                    post_facebook(
-                        pesan,
-                        get_shakemap_url(current["id"])
+                    fb_post_id = load_fb_post_id()
+
+                    edit_facebook_post(
+                        fb_post_id,
+                        pesan
                     )
 
                     print("UPDATE PARAMETER")
