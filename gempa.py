@@ -345,7 +345,7 @@ def edit_facebook_post(post_id, message):
 
         if r.status_code == 200:
 
-            save_fb_post_text(message)
+            pass
 
     except Exception as e:
 
@@ -812,12 +812,35 @@ Magnitudo M{round(float(current['mag']),1)}
                     send_message(pesan)
 
                     fb_post_id = load_fb_post_id()
-
-                    edit_facebook_post(
-                        fb_post_id,
-                        pesan
+                
+                    old_text = load_fb_post_text()
+                
+                    update_number = (
+                        old_text.count("🔄 UPDATE #")
+                        + 1
                     )
 
+                    new_text = (
+                        old_text
+                        + "\n\n━━━━━━━━━━━━━━\n\n"
+                        + f"🔄 UPDATE #{update_number}\n\n"
+                        + pesan
+                    )
+
+                    print(
+                        "FB TEXT LENGTH:",
+                        len(new_text)
+                    )
+                    
+                    edit_facebook_post(
+                        fb_post_id,
+                        new_text
+                    )
+
+                    save_fb_post_text(
+                        new_text
+                    )
+                    
                     print("UPDATE PARAMETER")
 
 
