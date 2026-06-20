@@ -134,7 +134,24 @@ def post_facebook(message, image_url=None):
         if not FB_PAGE_ID or not FB_PAGE_TOKEN:
             return
 
+        use_photo = False
+
         if image_url:
+
+            try:
+
+                cek = requests.head(
+                    image_url,
+                    timeout=10
+                )
+
+                if cek.status_code < 400:
+                    use_photo = True
+
+            except:
+                pass
+
+        if use_photo:
 
             url = f"https://graph.facebook.com/v25.0/{FB_PAGE_ID}/photos"
 
@@ -159,10 +176,7 @@ def post_facebook(message, image_url=None):
             timeout=30
         )
 
-        print(
-            "FACEBOOK:",
-            r.status_code
-        )
+        print("FACEBOOK:", r.status_code)
 
         print(
             "FACEBOOK RESPONSE:",
@@ -175,7 +189,8 @@ def post_facebook(message, image_url=None):
             "FACEBOOK ERROR:",
             e
         )
-        
+
+
 # ==========================
 # SHAKEMAP
 # ==========================
@@ -186,7 +201,8 @@ def get_shakemap_url(gempa_id):
         "https://bmkg-content-inatews.storage.googleapis.com/"
         f"mt.{gempa_id}.png"
     )
-    
+
+
 # =====================================
 # WIB
 # =====================================
