@@ -127,25 +127,31 @@ def send_photo(photo_url, caption):
 FB_PAGE_ID = os.getenv("FB_PAGE_ID")
 FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
 
-print("=== DEBUG ENV ===")
-print("ALL KEYS =", list(os.environ.keys()))
-print("FB_PAGE_ID =", FB_PAGE_ID)
-print("TOKEN ADA =", FB_PAGE_TOKEN is not None)
-print("=================")
-
-def post_facebook(message):
+def post_facebook(message, image_url=None):
 
     try:
 
-        url = f"https://graph.facebook.com/{FB_PAGE_ID}/feed"
+        if not FB_PAGE_ID or not FB_PAGE_TOKEN:
+            return
 
-        payload = {
+        if image_url:
 
-            "message": message,
+            url = f"https://graph.facebook.com/v25.0/{FB_PAGE_ID}/photos"
 
-            "access_token": FB_PAGE_TOKEN
+            payload = {
+                "url": image_url,
+                "caption": message,
+                "access_token": FB_PAGE_TOKEN
+            }
 
-        }
+        else:
+
+            url = f"https://graph.facebook.com/v25.0/{FB_PAGE_ID}/feed"
+
+            payload = {
+                "message": message,
+                "access_token": FB_PAGE_TOKEN
+            }
 
         r = requests.post(
             url,
@@ -158,18 +164,24 @@ def post_facebook(message):
             r.status_code
         )
 
-        print(
-            r.text
-        )
-
     except Exception as e:
 
         print(
             "FACEBOOK ERROR:",
             e
         )
+        
+# ==========================
+# SHAKEMAP
+# ==========================
 
+def get_shakemap_url(gempa_id):
 
+    return (
+        "https://bmkg-content-inatews.storage.googleapis.com/"
+        f"mt.{gempa_id}.png"
+    )
+    
 # =====================================
 # WIB
 # =====================================
@@ -355,9 +367,7 @@ def lokasi_detail(lat, lon):
         return "Indonesia"
 
 
-print("Bot Gempa V10.1 test berjalan...")
-
-post_facebook("✅ TEST V10 FACEBOOK BERHASIL")
+print("Bot Gempa V11 berjalan...")
 
 cached_id = load_last_id()
 
@@ -505,9 +515,15 @@ Fase ke-{current['fase']}
 #GEMPAdanCUACA
 """
 
-                send_message(caption)
+                send_photo(
+                    photo_url,
+                    caption
+                )
 
-                post_facebook(caption)
+                post_facebook(
+                    caption,
+                    get_shakemap_url(current["id"])
+                )
 
                 print("GEMPA BARU DIKIRIM")
 
@@ -610,7 +626,10 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     send_message(pesan)
 
-                    post_facebook(pesan)
+                    post_facebook(
+                        pesan,
+                        get_shakemap_url(current["id"])
+                    )
 
                     print("UPDATE PARAMETER")
 
@@ -622,4 +641,4 @@ Magnitudo M{round(float(current['mag']),1)}
 
         print("ERROR:", e)
 
-    time.sleep(5)
+    time.sleep(10)
