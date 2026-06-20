@@ -127,8 +127,11 @@ def send_photo(photo_url, caption):
 FB_PAGE_ID = os.getenv("FB_PAGE_ID")
 FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
 
+print("=== DEBUG ENV ===")
+print("ALL KEYS =", list(os.environ.keys()))
 print("FB_PAGE_ID =", FB_PAGE_ID)
 print("TOKEN ADA =", FB_PAGE_TOKEN is not None)
+print("=================")
 
 def post_facebook(message):
 
@@ -352,7 +355,7 @@ def lokasi_detail(lat, lon):
         return "Indonesia"
 
 
-print("Bot Gempa V10 berjalan...")
+print("Bot Gempa V10.1 test berjalan...")
 
 post_facebook("✅ TEST V10 FACEBOOK BERHASIL")
 
