@@ -233,6 +233,68 @@ def update_daily_stats(provinsi):
         len(data[hari])
     )
 
+def build_daily_report():
+
+    hari = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
+    data = load_daily_stats()
+
+    if hari not in data:
+
+        return None
+
+    statistik = data[hari]
+
+    total = sum(
+        statistik.values()
+    )
+
+    ranking = sorted(
+        statistik.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    teks = (
+        "📊 REKAP GEMPA HARIAN\n\n"
+        f"{hari}\n\n"
+        f"🌍 Total Gempa: {total}\n\n"
+    )
+
+    medal = [
+        "🥇",
+        "🥈",
+        "🥉"
+    ]
+
+    for i, item in enumerate(
+        ranking[:10]
+    ):
+
+        provinsi = item[0]
+        jumlah = item[1]
+
+        icon = (
+            medal[i]
+            if i < 3
+            else "•"
+        )
+
+        teks += (
+            f"{icon} "
+            f"{provinsi}: "
+            f"{jumlah}\n"
+        )
+
+    teks += (
+        "\n━━━━━━━━━━━━━━\n"
+        "🛰 Sumber: InaTEWS BMKG"
+    )
+
+    return teks
+
 
 # =====================================
 # TELEGRAM
