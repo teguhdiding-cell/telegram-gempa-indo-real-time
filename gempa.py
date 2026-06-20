@@ -164,6 +164,11 @@ def post_facebook(message, image_url=None):
             r.status_code
         )
 
+        print(
+            "FACEBOOK RESPONSE:",
+            r.text
+        )
+
     except Exception as e:
 
         print(
