@@ -184,6 +184,23 @@ def save_daily_stats(data):
         )
 
 
+def get_provinsi_only(lokasi_text):
+
+    if not lokasi_text:
+        return "Tidak Diketahui"
+
+    baris = [
+        x.strip()
+        for x in lokasi_text.split("\n")
+        if x.strip()
+    ]
+
+    if len(baris) == 0:
+        return "Tidak Diketahui"
+
+    return baris[-1]
+
+
 def update_daily_stats(provinsi):
 
     hari = datetime.now().strftime(
@@ -209,6 +226,11 @@ def update_daily_stats(provinsi):
         provinsi,
         "=",
         data[hari][provinsi]
+    )
+
+    print(
+        "TOTAL PROVINSI HARI INI:",
+        len(data[hari])
     )
 
 
@@ -728,6 +750,15 @@ while True:
                     current["lon"]
                 )
 
+                provinsi = get_provinsi_only(
+                    lokasi_pro
+                )
+
+                print(
+                    "PROVINSI:",
+                    provinsi
+                )
+                
                 caption = f"""
 🚨 GEMPA REALTIME InaTEWS
 
@@ -767,7 +798,7 @@ Fase ke-{current['fase']}
 """
 
                 update_daily_stats(
-                    lokasi_pro
+                    provinsi
                 )
                 
                 send_photo(
