@@ -121,6 +121,50 @@ def send_photo(photo_url, caption):
 
 
 # =====================================
+# FACEBOOK
+# =====================================
+
+FB_PAGE_ID = os.getenv("FB_PAGE_ID")
+FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
+
+def post_facebook(message):
+
+    try:
+
+        url = f"https://graph.facebook.com/{FB_PAGE_ID}/feed"
+
+        payload = {
+
+            "message": message,
+
+            "access_token": FB_PAGE_TOKEN
+
+        }
+
+        r = requests.post(
+            url,
+            data=payload,
+            timeout=30
+        )
+
+        print(
+            "FACEBOOK:",
+            r.status_code
+        )
+
+        print(
+            r.text
+        )
+
+    except Exception as e:
+
+        print(
+            "FACEBOOK ERROR:",
+            e
+        )
+
+
+# =====================================
 # WIB
 # =====================================
 
@@ -305,7 +349,9 @@ def lokasi_detail(lat, lon):
         return "Indonesia"
 
 
-print("Bot Gempa V9 berjalan...")
+print("Bot Gempa V10 berjalan...")
+
+post_facebook("✅ TEST V10 FACEBOOK BERHASIL")
 
 cached_id = load_last_id()
 
@@ -455,6 +501,8 @@ Fase ke-{current['fase']}
 
                 send_message(caption)
 
+                post_facebook(caption)
+
                 print("GEMPA BARU DIKIRIM")
 
                 save_last_id(current["id"])
@@ -555,6 +603,8 @@ Magnitudo M{round(float(current['mag']),1)}
                     )
 
                     send_message(pesan)
+
+                    post_facebook(pesan)
 
                     print("UPDATE PARAMETER")
 
