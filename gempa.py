@@ -265,12 +265,43 @@ def post_facebook(message, image_url=None):
             timeout=30
         )
 
-        print("FACEBOOK:", r.status_code)
+        print(
+            "FACEBOOK:",
+            r.status_code
+        )
 
         print(
             "FACEBOOK RESPONSE:",
             r.text
         )
+
+        if r.status_code == 200:
+
+            try:
+
+                data_fb = r.json()
+
+                if "id" in data_fb:
+
+                    save_fb_post_id(
+                        data_fb["id"]
+                    )
+
+                    save_fb_post_text(
+                        message
+                    )
+
+                    print(
+                        "FB POST ID DISIMPAN:",
+                        data_fb["id"]
+                    )
+
+            except Exception as e:
+
+                print(
+                    "SAVE FB CACHE ERROR:",
+                    e
+                )
 
     except Exception as e:
 
