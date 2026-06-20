@@ -15,6 +15,9 @@ last_event_key = None
 
 LAST_ID_FILE = "last_id.txt"
 
+FB_POST_ID_FILE = "facebook_post_id.txt"
+FB_POST_TEXT_FILE = "facebook_post_text.txt"
+
 geo_cache = {}
 
 
@@ -53,6 +56,92 @@ def save_last_id(gempa_id):
 
         print(
             "SAVE ID ERROR:",
+            e
+        )
+
+
+# =====================================
+# FACEBOOK POST CACHE
+# =====================================
+
+def load_fb_post_id():
+
+    try:
+
+        with open(
+            FB_POST_ID_FILE,
+            "r"
+        ) as f:
+
+            data = f.read().strip()
+
+            if data == "none":
+                return None
+
+            return data
+
+    except:
+
+        return None
+
+
+def save_fb_post_id(post_id):
+
+    try:
+
+        with open(
+            FB_POST_ID_FILE,
+            "w"
+        ) as f:
+
+            f.write(post_id)
+
+    except Exception as e:
+
+        print(
+            "SAVE FB POST ID ERROR:",
+            e
+        )
+
+
+def load_fb_post_text():
+
+    try:
+
+        with open(
+            FB_POST_TEXT_FILE,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            data = f.read()
+
+            if data.strip() == "none":
+                return ""
+
+            return data
+
+    except:
+
+        return ""
+
+
+def save_fb_post_text(text):
+
+    try:
+
+        with open(
+            FB_POST_TEXT_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(text)
+
+    except Exception as e:
+
+        print(
+            "SAVE FB TEXT ERROR:",
             e
         )
 
