@@ -127,6 +127,9 @@ def send_photo(photo_url, caption):
 FB_PAGE_ID = os.getenv("FB_PAGE_ID")
 FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
 
+print("FB_PAGE_ID =", FB_PAGE_ID)
+print("TOKEN ADA =", FB_PAGE_TOKEN is not None)
+
 def post_facebook(message):
 
     try:
