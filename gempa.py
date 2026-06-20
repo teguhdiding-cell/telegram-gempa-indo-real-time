@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+import json
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
 
@@ -144,6 +145,71 @@ def save_fb_post_text(text):
             "SAVE FB TEXT ERROR:",
             e
         )
+
+
+# =====================================
+# DAILY STATS
+# =====================================
+
+def load_daily_stats():
+
+    try:
+
+        with open(
+            "daily_stats.json",
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            return json.load(f)
+
+    except:
+
+        return {}
+
+
+def save_daily_stats(data):
+
+    with open(
+        "daily_stats.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            data,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
+
+
+def update_daily_stats(provinsi):
+
+    hari = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
+    data = load_daily_stats()
+
+    if hari not in data:
+
+        data[hari] = {}
+
+    if provinsi not in data[hari]:
+
+        data[hari][provinsi] = 0
+
+    data[hari][provinsi] += 1
+
+    save_daily_stats(data)
+
+    print(
+        "STAT HARIAN:",
+        provinsi,
+        "=",
+        data[hari][provinsi]
+    )
 
 
 # =====================================
@@ -700,6 +766,10 @@ Fase ke-{current['fase']}
 #GEMPAdanCUACA
 """
 
+                update_daily_stats(
+                    lokasi_pro
+                )
+                
                 send_photo(
                     photo_url,
                     caption
