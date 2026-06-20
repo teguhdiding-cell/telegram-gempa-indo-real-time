@@ -862,6 +862,20 @@ Fase ke-{current['fase']}
                 update_daily_stats(
                     provinsi
                 )
+
+                report = build_daily_report()
+
+                if report:
+                
+                    print(
+                        "\n===== REKAP HARIAN =====\n"
+                    )
+                
+                    print(report)
+                
+                    print(
+                        "\n========================\n"
+                    )
                 
                 send_photo(
                     photo_url,
