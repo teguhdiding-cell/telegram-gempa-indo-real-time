@@ -744,9 +744,13 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "22:08":
+        if jam == "22:17":
         
             if last_daily_report != hari:
+
+                print(
+                    "REKAP TEST DIJALANKAN"
+                )
         
                 test_daily_report()
         
