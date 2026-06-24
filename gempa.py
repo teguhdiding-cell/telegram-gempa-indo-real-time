@@ -736,7 +736,7 @@ while True:
 
     try:
 
-        now = datetime.now()
+        now = datetime.utcnow() + timedelta(hours=7)
 
         jam = now.strftime("%H:%M")
 
