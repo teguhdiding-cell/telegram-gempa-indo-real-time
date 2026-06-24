@@ -749,7 +749,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "22:49":
+        if jam == "23:17":
 
             print("JAM COCOK")
         
