@@ -297,22 +297,31 @@ def build_daily_report():
         "%Y-%m-%d"
     )
 
-    data = load_daily_stats()
+    conn = sqlite3.connect(DB_FILE)
 
-    if hari not in data:
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT provinsi, jumlah
+        FROM daily_stats
+        WHERE tanggal=?
+        ORDER BY jumlah DESC
+        """,
+        (hari,)
+    )
+
+    ranking = cur.fetchall()
+
+    conn.close()
+
+    if not ranking:
 
         return None
 
-    statistik = data[hari]
-
     total = sum(
-        statistik.values()
-    )
-
-    ranking = sorted(
-        statistik.items(),
-        key=lambda x: x[1],
-        reverse=True
+        row[1]
+        for row in ranking
     )
 
     teks = (
@@ -327,12 +336,12 @@ def build_daily_report():
         "🥉"
     ]
 
-    for i, item in enumerate(
+    for i, row in enumerate(
         ranking[:10]
     ):
 
-        provinsi = item[0]
-        jumlah = item[1]
+        provinsi = row[0]
+        jumlah = row[1]
 
         icon = (
             medal[i]
