@@ -755,8 +755,7 @@ while True:
         data = requests.get(
             URL,
             timeout=30
-
-        data = requests.get(URL, timeout=30).json()
+        ).json()
 
         gempa = data["features"][0]
 
