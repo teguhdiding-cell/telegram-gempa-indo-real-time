@@ -744,7 +744,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "22:31":
+        if jam == "22:36":
         
             if last_daily_report != hari:
 
