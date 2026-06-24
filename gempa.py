@@ -738,6 +738,8 @@ while True:
 
         now = datetime.now()
 
+        jam = now.strftime("%H:%M")
+
         hari = now.strftime(
         "%Y-%m-%d"
         )
@@ -749,6 +751,10 @@ while True:
                 test_daily_report()
         
                 last_daily_report = hari
+
+        data = requests.get(
+            URL,
+            timeout=30
 
         data = requests.get(URL, timeout=30).json()
 
