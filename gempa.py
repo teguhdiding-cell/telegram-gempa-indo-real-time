@@ -744,7 +744,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "22:17":
+        if jam == "22:31":
         
             if last_daily_report != hari:
 
@@ -901,20 +901,6 @@ Fase ke-{current['fase']}
                 update_daily_stats(
                     provinsi
                 )
-
-                report = build_daily_report()
-
-                if report:
-                
-                    print(
-                        "\n===== REKAP HARIAN =====\n"
-                    )
-                
-                    print(report)
-                
-                    print(
-                        "\n========================\n"
-                    )
                 
                 send_photo(
                     photo_url,
