@@ -749,13 +749,15 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "23:17":
+        if jam == "23:25":
 
-            print("JAM COCOK")
+            if last_daily_report != hari:
         
-            test_daily_report()
+                print("JAM COCOK")
         
-            last_daily_report = hari
+                test_daily_report()
+        
+                last_daily_report = hari
 
         data = requests.get(
             URL,
