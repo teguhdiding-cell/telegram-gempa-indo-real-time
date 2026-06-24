@@ -242,30 +242,53 @@ def update_daily_stats(provinsi):
         "%Y-%m-%d"
     )
 
-    data = load_daily_stats()
+    conn = sqlite3.connect(DB_FILE)
 
-    if hari not in data:
+    cur = conn.cursor()
 
-        data[hari] = {}
+    cur.execute(
+        """
+        INSERT INTO daily_stats
+        (tanggal, provinsi, jumlah)
 
-    if provinsi not in data[hari]:
+        VALUES (?, ?, 1)
 
-        data[hari][provinsi] = 0
+        ON CONFLICT(tanggal, provinsi)
 
-    data[hari][provinsi] += 1
+        DO UPDATE SET
 
-    save_daily_stats(data)
+        jumlah = jumlah + 1
+        """,
+        (
+            hari,
+            provinsi
+        )
+    )
+
+    conn.commit()
+
+    cur.execute(
+        """
+        SELECT jumlah
+        FROM daily_stats
+        WHERE tanggal=?
+        AND provinsi=?
+        """,
+        (
+            hari,
+            provinsi
+        )
+    )
+
+    total = cur.fetchone()[0]
+
+    conn.close()
 
     print(
         "STAT HARIAN:",
         provinsi,
         "=",
-        data[hari][provinsi]
-    )
-
-    print(
-        "TOTAL PROVINSI HARI INI:",
-        len(data[hari])
+        total
     )
 
 def build_daily_report():
