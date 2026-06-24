@@ -740,6 +740,11 @@ while True:
 
         jam = now.strftime("%H:%M")
 
+        print(
+            "JAM PYTHON:",
+            jam
+        )
+
         hari = now.strftime(
         "%Y-%m-%d"
         )
