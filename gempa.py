@@ -14,6 +14,8 @@ last_data = None
 
 last_event_key = None
 
+last_daily_report = None
+
 LAST_ID_FILE = "last_id.txt"
 
 FB_POST_ID_FILE = "facebook_post_id.txt"
@@ -294,6 +296,20 @@ def build_daily_report():
     )
 
     return teks
+
+def test_daily_report():
+
+    report = build_daily_report()
+
+    if report:
+
+        send_message(
+            report
+        )
+
+        print(
+            "TEST REKAP TERKIRIM"
+        )
 
 
 # =====================================
@@ -719,6 +735,20 @@ print(
 while True:
 
     try:
+
+        now = datetime.now()
+
+        hari = now.strftime(
+        "%Y-%m-%d"
+        )
+
+        if jam == "23:21":
+        
+            if last_daily_report != hari:
+        
+                test_daily_report()
+        
+                last_daily_report = hari
 
         data = requests.get(URL, timeout=30).json()
 
