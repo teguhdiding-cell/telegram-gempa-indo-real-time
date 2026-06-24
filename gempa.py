@@ -2,6 +2,7 @@ import requests
 import os
 import time
 import json
+import sqlite3
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
 
@@ -22,6 +23,8 @@ FB_POST_ID_FILE = "facebook_post_id.txt"
 FB_POST_TEXT_FILE = "facebook_post_text.txt"
 
 geo_cache = {}
+
+DB_FILE = "gempa.db"
 
 
 # =====================================
@@ -147,6 +150,36 @@ def save_fb_post_text(text):
             "SAVE FB TEXT ERROR:",
             e
         )
+
+
+# =====================================
+# SQLITE
+# =====================================
+
+def init_db():
+
+    conn = sqlite3.connect(DB_FILE)
+
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS daily_stats (
+        tanggal TEXT,
+        provinsi TEXT,
+        jumlah INTEGER,
+        PRIMARY KEY (tanggal, provinsi)
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS daily_report_status (
+        tanggal TEXT PRIMARY KEY,
+        sent INTEGER DEFAULT 0
+    )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
 # =====================================
@@ -717,6 +750,8 @@ def lokasi_detail(lat, lon):
 
         return "Indonesia"
 
+
+init_db()
 
 print("Bot Gempa V11 berjalan...")
 
