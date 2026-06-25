@@ -18,6 +18,38 @@ supabase = create_client(
     SUPABASE_KEY
 )
 
+
+# =====================================
+# SUPABASE LAST ID
+# =====================================
+
+def load_last_id_supabase():
+
+    try:
+
+        response = (
+            supabase
+            .table("bot_state")
+            .select("value")
+            .eq("key", "last_id")
+            .execute()
+        )
+
+        if response.data:
+
+            return response.data[0]["value"]
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "SUPABASE LOAD ERROR:",
+            e
+        )
+
+        return None
+        
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
 last_data = None
