@@ -5,9 +5,18 @@ import json
 import sqlite3
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
+from supabase import create_client
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
 
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
@@ -832,6 +841,22 @@ def lokasi_detail(lat, lon):
 
 
 init_db()
+
+try:
+
+    result = (
+        supabase
+        .table("bot_state")
+        .select("*")
+        .limit(1)
+        .execute()
+    )
+
+    print("SUPABASE CONNECTED")
+
+except Exception as e:
+
+    print("SUPABASE ERROR:", e)
 
 print("Bot Gempa V11 berjalan...")
 
