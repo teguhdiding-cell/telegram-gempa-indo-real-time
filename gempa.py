@@ -170,7 +170,18 @@ def init_db():
 
     conn = sqlite3.connect(DB_FILE)
 
+    print("DATABASE:", DB_FILE)
+
     cur = conn.cursor()
+
+    cur.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    )
+
+    print(
+        "TABLE:",
+        cur.fetchall()
+    )
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS daily_stats (
