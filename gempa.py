@@ -268,6 +268,15 @@ def update_daily_stats(provinsi):
     conn.commit()
 
     cur.execute(
+    "SELECT * FROM daily_stats"
+    )
+    
+    print(
+        "ISI DATABASE:",
+        cur.fetchall()
+    )
+
+    cur.execute(
         """
         SELECT jumlah
         FROM daily_stats
