@@ -374,6 +374,85 @@ def build_daily_report():
 
     return teks
 
+
+# =====================================
+# DAILY REPORT SUPABASE
+# =====================================
+
+def build_daily_report_supabase():
+
+    try:
+
+        hari = now_wib().strftime("%Y-%m-%d")
+
+        response = (
+            supabase
+            .table("earthquake_log")
+            .select("provinsi")
+            .gte("waktu", f"{hari}T00:00:00+07:00")
+            .lt("waktu", f"{hari}T23:59:59+07:00")
+            .execute()
+        )
+
+        data = response.data
+
+        if not data:
+            return None
+
+        statistik = {}
+
+        for row in data:
+
+            prov = row["provinsi"]
+
+            statistik[prov] = statistik.get(prov, 0) + 1
+
+        ranking = sorted(
+            statistik.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        total = len(data)
+
+        teks = (
+            "📊 REKAP GEMPA HARIAN\n\n"
+            f"{hari}\n\n"
+            f"🌍 Total Gempa: {total}\n\n"
+        )
+
+        medal = [
+            "🥇",
+            "🥈",
+            "🥉"
+        ]
+
+        for i, (provinsi, jumlah) in enumerate(ranking[:10]):
+
+            icon = medal[i] if i < 3 else "•"
+
+            teks += (
+                f"{icon} "
+                f"{provinsi}: "
+                f"{jumlah}\n"
+            )
+
+        teks += (
+            "\n━━━━━━━━━━━━━━\n"
+            "🛰 Sumber: Database Gempa Indonesia"
+        )
+
+        return teks
+
+    except Exception as e:
+
+        print(
+            "SUPABASE REPORT ERROR:",
+            e
+        )
+
+        return None
+
 def test_daily_report():
 
     report = build_daily_report()
@@ -813,6 +892,14 @@ except Exception as e:
     print("SUPABASE ERROR:", e)
 
 print("Bot Gempa V11 berjalan...")
+
+print("===== TEST REPORT SUPABASE =====")
+
+report = build_daily_report_supabase()
+
+print(report)
+
+print("===============================")
 
 cached_id = load_state("last_id")
 
