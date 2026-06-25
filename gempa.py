@@ -68,6 +68,40 @@ def save_state(key, value):
             "SUPABASE SAVE STATE ERROR:",
             e
         )
+
+
+# =====================================
+# EARTHQUAKE LOG
+# =====================================
+
+def save_earthquake_log(data, provinsi):
+
+    try:
+
+        supabase.table("earthquake_log").upsert(
+            {
+                "id": data["id"],
+                "waktu": data["time"],
+                "magnitudo": float(data["mag"]),
+                "kedalaman": float(data["depth"]),
+                "fase": int(data["fase"]),
+                "provinsi": provinsi,
+                "latitude": float(data["lat"]),
+                "longitude": float(data["lon"])
+            }
+        ).execute()
+
+        print(
+            "EARTHQUAKE LOG SAVED:",
+            data["id"]
+        )
+
+    except Exception as e:
+
+        print(
+            "EARTHQUAKE LOG ERROR:",
+            e
+        )
         
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
