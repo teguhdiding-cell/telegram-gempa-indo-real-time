@@ -338,6 +338,13 @@ def build_daily_report():
 
     cur = conn.cursor()
 
+    cur.execute("SELECT * FROM daily_stats")
+
+    print(
+        "SEMUA DATA:",
+        cur.fetchall()
+    )
+
     cur.execute(
         """
         SELECT provinsi, jumlah
