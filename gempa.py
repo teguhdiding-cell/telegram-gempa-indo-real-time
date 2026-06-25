@@ -366,11 +366,11 @@ def test_daily_report():
 
     report = build_daily_report()
 
+    print(report)
+
     if report:
 
-        send_message(
-            report
-        )
+        send_message(report)
 
         print(
             "TEST REKAP TERKIRIM"
@@ -816,7 +816,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "23:25":
+        if jam == "17:56":
 
             if last_daily_report != hari:
         
