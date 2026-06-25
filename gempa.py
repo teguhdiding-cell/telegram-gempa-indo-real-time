@@ -31,8 +31,10 @@ DB_FILE = "gempa.db"
 # WAKTU WIB
 # =====================================
 
+from datetime import datetime, timedelta, UTC
+
 def now_wib():
-    return datetime.utcnow() + timedelta(hours=7)
+    return datetime.now(UTC) + timedelta(hours=7)
 
 
 # =====================================
@@ -847,7 +849,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "18:24":
+        if jam == "18:39":
 
             if last_daily_report != hari:
         
