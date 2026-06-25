@@ -275,6 +275,16 @@ def update_daily_stats(provinsi):
 
     conn.commit()
 
+    cur.execute("""
+    SELECT COUNT(*)
+    FROM daily_stats
+    """)
+    
+    print(
+        "JUMLAH DATA DATABASE:",
+        cur.fetchone()[0]
+    )
+
     cur.execute(
     "SELECT * FROM daily_stats"
     )
