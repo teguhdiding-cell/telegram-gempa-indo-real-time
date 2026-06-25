@@ -72,6 +72,57 @@ def save_last_id_supabase(last_id):
             "SUPABASE SAVE ERROR:",
             e
         )
+
+
+# =====================================
+# SUPABASE GENERIC STATE
+# =====================================
+
+def load_state(key):
+
+    try:
+
+        response = (
+            supabase
+            .table("bot_state")
+            .select("value")
+            .eq("key", key)
+            .execute()
+        )
+
+        if response.data:
+
+            return response.data[0]["value"]
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "SUPABASE LOAD STATE ERROR:",
+            e
+        )
+
+        return None
+
+
+def save_state(key, value):
+
+    try:
+
+        supabase.table("bot_state").upsert(
+            {
+                "key": key,
+                "value": value
+            }
+        ).execute()
+
+    except Exception as e:
+
+        print(
+            "SUPABASE SAVE STATE ERROR:",
+            e
+        )
         
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
