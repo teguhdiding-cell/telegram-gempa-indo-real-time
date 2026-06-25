@@ -1156,6 +1156,20 @@ Magnitudo M{round(float(current['mag']),1)}
 
             last_data = current
             last_event_key = event_key
+
+            # ==========================
+            # REKAP HARIAN
+            # ==========================
+            
+            if jam == "19:33":
+            
+                if last_daily_report != hari:
+            
+                    print("JAM COCOK")
+            
+                    test_daily_report()
+            
+                    last_daily_report = hari
     
     except Exception as e:
 
