@@ -677,10 +677,8 @@ def post_facebook(message, image_url=None):
 
                 if "id" in data_fb:
 
-                    save_fb_post_id(
-                        data_fb["id"]
-                    )
-
+                    save_state("fb_post_id", data_fb["id"])
+                    
                     save_fb_post_text(
                         message
                     )
@@ -1250,7 +1248,7 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     send_message(pesan)
 
-                    fb_post_id = load_fb_post_id()
+                    fb_post_id = load_state("fb_post_id")
                 
                     old_text = load_fb_post_text()
                 
