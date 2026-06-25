@@ -49,6 +49,29 @@ def load_last_id_supabase():
         )
 
         return None
+
+def save_last_id_supabase(last_id):
+
+    try:
+
+        supabase.table("bot_state").upsert(
+            {
+                "key": "last_id",
+                "value": last_id
+            }
+        ).execute()
+
+        print(
+            "SUPABASE SAVE:",
+            last_id
+        )
+
+    except Exception as e:
+
+        print(
+            "SUPABASE SAVE ERROR:",
+            e
+        )
         
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
