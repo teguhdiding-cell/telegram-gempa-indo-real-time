@@ -814,23 +814,6 @@ except Exception as e:
 
 print("Bot Gempa V11 berjalan...")
 
-print("===== TEST EARTHQUAKE LOG =====")
-
-save_earthquake_log(
-    {
-        "id": "TEST123",
-        "time": "2026-06-25T22:00:00+07:00",
-        "mag": 4.5,
-        "depth": 10,
-        "fase": 1,
-        "lat": -1.23,
-        "lon": 120.45
-    },
-    "Sulawesi Tengah"
-)
-
-print("===============================")
-
 cached_id = load_state("last_id")
 
 print(
@@ -1004,6 +987,11 @@ Fase ke-{current['fase']}
 """
 
                 update_daily_stats(
+                    provinsi
+                )
+
+                save_earthquake_log(
+                    current,
                     provinsi
                 )
                 
