@@ -28,6 +28,14 @@ DB_FILE = "gempa.db"
 
 
 # =====================================
+# WAKTU WIB
+# =====================================
+
+def now_wib():
+    return datetime.utcnow() + timedelta(hours=7)
+
+
+# =====================================
 # LAST ID CACHE
 # =====================================
 
@@ -238,7 +246,7 @@ def get_provinsi_only(lokasi_text):
 
 def update_daily_stats(provinsi):
 
-    hari = datetime.now().strftime(
+    hari = now_wib().strftime(
         "%Y-%m-%d"
     )
 
@@ -302,7 +310,7 @@ def update_daily_stats(provinsi):
 
 def build_daily_report():
 
-    hari = datetime.now().strftime(
+    hari = now_wib().strftime(
         "%Y-%m-%d"
     )
 
@@ -323,6 +331,8 @@ def build_daily_report():
     ranking = cur.fetchall()
 
     conn.close()
+
+    print("HASIL QUERY:", ranking)
 
     if not ranking:
 
@@ -368,6 +378,8 @@ def build_daily_report():
         "\n━━━━━━━━━━━━━━\n"
         "🛰 Sumber: InaTEWS BMKG"
     )
+
+    print("REKAP BERHASIL DIBUAT")
 
     return teks
 
@@ -812,7 +824,7 @@ while True:
 
     try:
 
-        now = datetime.utcnow() + timedelta(hours=7)
+        now = now_wib()
 
         jam = now.strftime("%H:%M")
 
@@ -825,7 +837,7 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "17:56":
+        if jam == "18:24":
 
             if last_daily_report != hari:
         
