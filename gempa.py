@@ -864,16 +864,6 @@ while True:
         "%Y-%m-%d"
         )
 
-        if jam == "18:39":
-
-            if last_daily_report != hari:
-        
-                print("JAM COCOK")
-        
-                test_daily_report()
-        
-                last_daily_report = hari
-
         data = requests.get(
             URL,
             timeout=30
