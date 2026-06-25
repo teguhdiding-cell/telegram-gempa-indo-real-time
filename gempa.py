@@ -893,14 +893,6 @@ except Exception as e:
 
 print("Bot Gempa V11 berjalan...")
 
-print("===== TEST REPORT SUPABASE =====")
-
-report = build_daily_report_supabase()
-
-print(report)
-
-print("===============================")
-
 cached_id = load_state("last_id")
 
 print(
