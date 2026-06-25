@@ -20,61 +20,6 @@ supabase = create_client(
 
 
 # =====================================
-# SUPABASE LAST ID
-# =====================================
-
-def load_last_id_supabase():
-
-    try:
-
-        response = (
-            supabase
-            .table("bot_state")
-            .select("value")
-            .eq("key", "last_id")
-            .execute()
-        )
-
-        if response.data:
-
-            return response.data[0]["value"]
-
-        return None
-
-    except Exception as e:
-
-        print(
-            "SUPABASE LOAD ERROR:",
-            e
-        )
-
-        return None
-
-def save_last_id_supabase(last_id):
-
-    try:
-
-        supabase.table("bot_state").upsert(
-            {
-                "key": "last_id",
-                "value": last_id
-            }
-        ).execute()
-
-        print(
-            "SUPABASE SAVE:",
-            last_id
-        )
-
-    except Exception as e:
-
-        print(
-            "SUPABASE SAVE ERROR:",
-            e
-        )
-
-
-# =====================================
 # SUPABASE GENERIC STATE
 # =====================================
 
@@ -835,7 +780,7 @@ except Exception as e:
 
 print("Bot Gempa V11 berjalan...")
 
-cached_id = load_last_id_supabase()
+cached_id = load_state("last_id")
 
 print(
     "LAST ID CACHE:",
@@ -908,7 +853,10 @@ while True:
 
             else:
 
-                save_last_id_supabase(current["id"])
+                save_state(
+                    "last_id",
+                    current["id"]
+                )
 
                 cached_id = current["id"]
 
@@ -1020,7 +968,10 @@ Fase ke-{current['fase']}
 
                 print("GEMPA BARU DIKIRIM")
 
-                save_last_id_supabase(current["id"])
+                save_state(
+                    "last_id",
+                    current["id"]
+                )
                 cached_id = current["id"]
 
                 print(
