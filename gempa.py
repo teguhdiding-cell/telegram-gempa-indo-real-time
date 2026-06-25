@@ -679,7 +679,8 @@ def post_facebook(message, image_url=None):
 
                     save_state("fb_post_id", data_fb["id"])
                     
-                    save_fb_post_text(
+                    save_state(
+                        "fb_post_text",
                         message
                     )
 
@@ -1250,7 +1251,10 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     fb_post_id = load_state("fb_post_id")
                 
-                    old_text = load_fb_post_text()
+                    old_text = load_state("fb_post_text")
+
+                    if old_text is None:
+                        old_text = ""
                 
                     update_number = (
                         old_text.count("🔄 UPDATE #")
@@ -1274,7 +1278,8 @@ Magnitudo M{round(float(current['mag']),1)}
                         new_text
                     )
 
-                    save_fb_post_text(
+                    save_state(
+                        "fb_post_text",
                         new_text
                     )
                     
