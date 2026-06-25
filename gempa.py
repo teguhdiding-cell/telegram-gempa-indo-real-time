@@ -915,6 +915,16 @@ except Exception as e:
 
 print("Bot Gempa V11 berjalan...")
 
+print("===== TEST SUPABASE =====")
+
+save_last_id_supabase("TEST123")
+
+hasil = load_last_id_supabase()
+
+print("HASIL SUPABASE:", hasil)
+
+print("=========================")
+
 cached_id = load_last_id()
 
 print(
