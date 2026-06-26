@@ -857,10 +857,14 @@ def lokasi_detail(lat, lon):
         print("=" * 60)
 
         kabupaten = (
-            alamat.get("county")
+            alamat.get("regency")
+            or alamat.get("county")
             or alamat.get("city")
             or alamat.get("municipality")
             or alamat.get("state_district")
+            or alamat.get("village")
+            or alamat.get("town")
+            or alamat.get("hamlet")
             or "Tidak Diketahui"
         )
 
