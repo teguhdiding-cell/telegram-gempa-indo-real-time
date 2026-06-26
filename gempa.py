@@ -851,6 +851,11 @@ def lokasi_detail(lat, lon):
 
         alamat = lokasi.raw.get("address", {})
 
+        print("=" * 60)
+        print("RAW ADDRESS NOMINATIM")
+        print(json.dumps(alamat, indent=2, ensure_ascii=False))
+        print("=" * 60)
+
         kabupaten = (
             alamat.get("county")
             or alamat.get("city")
