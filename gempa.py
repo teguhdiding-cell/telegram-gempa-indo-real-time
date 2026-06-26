@@ -860,10 +860,11 @@ def lokasi_detail(lat, lon):
             alamat.get("regency")
             or alamat.get("county")
             or alamat.get("city")
+            or alamat.get("city_district")
             or alamat.get("municipality")
             or alamat.get("state_district")
-            or alamat.get("village")
             or alamat.get("town")
+            or alamat.get("village")
             or alamat.get("hamlet")
             or "Tidak Diketahui"
         )
@@ -1007,7 +1008,7 @@ print(
 # TEST KOORDINAT
 # =====================================
 
-test_nominatim(-8.7528, 117.2396)
+test_nominatim(-10.485366, 110.489494)
 
 
 # =====================================
