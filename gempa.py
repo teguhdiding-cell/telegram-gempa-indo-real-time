@@ -840,7 +840,7 @@ def lokasi_detail(lat, lon):
         if not lokasi:
 
             hasil = {
-                "kabupaten": "Tidak Diketahui",
+                "kabupaten": "Indonesia",
                 "provinsi": "Tidak Diketahui",
                 "display": "Indonesia"
             }
@@ -864,10 +864,28 @@ def lokasi_detail(lat, lon):
             or "Tidak Diketahui"
         )
 
-        display = kabupaten
+        # ==========================
+        # FORMAT DISPLAY
+        # ==========================
 
-        if provinsi != "Tidak Diketahui":
-            display += "\n" + provinsi
+        if kabupaten != "Tidak Diketahui":
+
+            display = kabupaten
+
+            if provinsi != "Tidak Diketahui":
+                display += "\n" + provinsi
+
+        else:
+
+            if provinsi != "Tidak Diketahui":
+
+                kabupaten = f"Perairan {provinsi}"
+                display = kabupaten
+
+            else:
+
+                kabupaten = "Indonesia"
+                display = "Indonesia"
 
         hasil = {
             "kabupaten": kabupaten,
@@ -887,7 +905,7 @@ def lokasi_detail(lat, lon):
         )
 
         hasil = {
-            "kabupaten": "Tidak Diketahui",
+            "kabupaten": "Indonesia",
             "provinsi": "Tidak Diketahui",
             "display": "Indonesia"
         }
