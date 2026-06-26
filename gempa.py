@@ -918,6 +918,60 @@ def lokasi_detail(lat, lon):
         return hasil
 
 
+# =====================================
+# TEST NOMINATIM
+# =====================================
+
+def test_nominatim(lat, lon):
+
+    print("\n")
+    print("=" * 70)
+    print("TEST NOMINATIM")
+    print(f"LAT : {lat}")
+    print(f"LON : {lon}")
+    print("=" * 70)
+
+    try:
+
+        lokasi = geolocator.reverse(
+            f"{lat},{lon}",
+            language="id",
+            timeout=10
+        )
+
+        if lokasi is None:
+
+            print("HASIL : TIDAK ADA")
+            return
+
+        print("\nRAW DATA")
+
+        print(
+            json.dumps(
+                lokasi.raw,
+                indent=4,
+                ensure_ascii=False
+            )
+        )
+
+        print("\nADDRESS")
+
+        print(
+            json.dumps(
+                lokasi.raw.get("address", {}),
+                indent=4,
+                ensure_ascii=False
+            )
+        )
+
+    except Exception as e:
+
+        print("ERROR :", e)
+
+    print("=" * 70)
+    print("\n")
+    
+
 init_db()
 
 try:
@@ -944,6 +998,12 @@ print(
     "LAST ID CACHE:",
     cached_id
 )
+
+# =====================================
+# TEST KOORDINAT
+# =====================================
+
+# test_nominatim(-8.7528, 117.2396)
 
 
 # =====================================
