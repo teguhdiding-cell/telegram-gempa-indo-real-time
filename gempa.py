@@ -74,7 +74,7 @@ def save_state(key, value):
 # EARTHQUAKE LOG
 # =====================================
 
-def save_earthquake_log(data, provinsi):
+def save_earthquake_log(data, kabupaten, provinsi):
 
     try:
 
@@ -85,6 +85,7 @@ def save_earthquake_log(data, provinsi):
                 "magnitudo": float(data["mag"]),
                 "kedalaman": float(data["depth"]),
                 "fase": int(data["fase"]),
+                "kabupaten": kabupaten,
                 "provinsi": provinsi,
                 "latitude": float(data["lat"]),
                 "longitude": float(data["lon"])
@@ -218,11 +219,9 @@ def get_provinsi_only(lokasi_text):
     return baris[-1]
 
 
-def update_daily_stats(provinsi):
+def update_daily_stats(kabupaten):
 
-    hari = now_wib().strftime(
-        "%Y-%m-%d"
-    )
+    hari = now_wib().strftime("%Y-%m-%d")
 
     conn = sqlite3.connect(DB_FILE)
 
@@ -243,7 +242,7 @@ def update_daily_stats(provinsi):
         """,
         (
             hari,
-            provinsi
+            kabupaten
         )
     )
 
@@ -253,16 +252,16 @@ def update_daily_stats(provinsi):
     SELECT COUNT(*)
     FROM daily_stats
     """)
-    
+
     print(
         "JUMLAH DATA DATABASE:",
         cur.fetchone()[0]
     )
 
     cur.execute(
-    "SELECT * FROM daily_stats"
+        "SELECT * FROM daily_stats"
     )
-    
+
     print(
         "ISI DATABASE:",
         cur.fetchall()
@@ -277,7 +276,7 @@ def update_daily_stats(provinsi):
         """,
         (
             hari,
-            provinsi
+            kabupaten
         )
     )
 
@@ -287,7 +286,7 @@ def update_daily_stats(provinsi):
 
     print(
         "STAT HARIAN:",
-        provinsi,
+        kabupaten,
         "=",
         total
     )
@@ -388,7 +387,7 @@ def build_daily_report_supabase():
         response = (
             supabase
             .table("earthquake_log")
-            .select("provinsi")
+            .select("kabupaten")
             .gte("waktu", f"{hari}T00:00:00+07:00")
             .lt("waktu", f"{hari}T23:59:59+07:00")
             .execute()
@@ -403,9 +402,11 @@ def build_daily_report_supabase():
 
         for row in data:
 
-            prov = row["provinsi"]
+            kabupaten = row["kabupaten"] or "Tidak Diketahui"
 
-            statistik[prov] = statistik.get(prov, 0) + 1
+            statistik[kabupaten] = (
+                statistik.get(kabupaten, 0) + 1
+            )
 
         ranking = sorted(
             statistik.items(),
@@ -427,13 +428,13 @@ def build_daily_report_supabase():
             "🥉"
         ]
 
-        for i, (provinsi, jumlah) in enumerate(ranking[:10]):
+        for i, (kabupaten, jumlah) in enumerate(ranking[:10]):
 
             icon = medal[i] if i < 3 else "•"
 
             teks += (
                 f"{icon} "
-                f"{provinsi}: "
+                f"{kabupaten}: "
                 f"{jumlah}\n"
             )
 
@@ -452,10 +453,10 @@ def build_daily_report_supabase():
         )
 
         return None
-
+        
 def test_daily_report():
 
-    report = build_daily_report()
+    report = build_daily_report_supabase()
 
     print(report)
 
@@ -811,11 +812,11 @@ def format_koordinat(lat, lon):
     return lat_txt, lon_txt
 
 # =====================================
-# GEOLOKASI V9
+# GEOLOKASI V12
 # =====================================
 
 geolocator = Nominatim(
-    user_agent="gempa-realtime-v9"
+    user_agent="gempa-realtime-v12"
 )
 
 def lokasi_detail(lat, lon):
@@ -827,7 +828,7 @@ def lokasi_detail(lat, lon):
 
     if key in geo_cache:
         return geo_cache[key]
-        
+
     try:
 
         lokasi = geolocator.reverse(
@@ -837,40 +838,61 @@ def lokasi_detail(lat, lon):
         )
 
         if not lokasi:
-            return "Indonesia"
 
-        alamat = lokasi.raw["address"]
+            hasil = {
+                "kabupaten": "Tidak Diketahui",
+                "provinsi": "Tidak Diketahui",
+                "display": "Indonesia"
+            }
+
+            geo_cache[key] = hasil
+
+            return hasil
+
+        alamat = lokasi.raw.get("address", {})
 
         kabupaten = (
             alamat.get("county")
             or alamat.get("city")
             or alamat.get("municipality")
             or alamat.get("state_district")
-            or ""
+            or "Tidak Diketahui"
         )
 
-        provinsi = alamat.get("state", "")
+        provinsi = (
+            alamat.get("state")
+            or "Tidak Diketahui"
+        )
 
-        hasil = []
+        display = kabupaten
 
-        if kabupaten:
-            hasil.append(kabupaten)
+        if provinsi != "Tidak Diketahui":
+            display += "\n" + provinsi
 
-        if provinsi:
-            hasil.append(provinsi)
+        hasil = {
+            "kabupaten": kabupaten,
+            "provinsi": provinsi,
+            "display": display
+        }
 
-        if hasil:
-            hasil_text = "\n".join(hasil)
-            geo_cache[key] = hasil_text
-            return hasil_text
+        geo_cache[key] = hasil
 
-        return lokasi.address
+        return hasil
 
     except Exception as e:
 
-        print("GEO ERROR:", e)
+        print(
+            "GEO ERROR:",
+            e
+        )
 
-        return "Indonesia"
+        hasil = {
+            "kabupaten": "Tidak Diketahui",
+            "provinsi": "Tidak Diketahui",
+            "display": "Indonesia"
+        }
+
+        return hasil
 
 
 init_db()
@@ -1013,15 +1035,22 @@ while True:
                     f"mt.{current['id']}.png"
                 )
 
-                lokasi_pro = lokasi_detail(
+                lokasi = lokasi_detail(
                     current["lat"],
                     current["lon"]
                 )
-
-                provinsi = get_provinsi_only(
-                    lokasi_pro
+                
+                lokasi_pro = lokasi["display"]
+                
+                kabupaten = lokasi["kabupaten"]
+                
+                provinsi = lokasi["provinsi"]
+                
+                print(
+                    "KABUPATEN:",
+                    kabupaten
                 )
-
+                
                 print(
                     "PROVINSI:",
                     provinsi
@@ -1066,11 +1095,12 @@ Fase ke-{current['fase']}
 """
 
                 update_daily_stats(
-                    provinsi
+                    kabupaten
                 )
-
+                
                 save_earthquake_log(
                     current,
+                    kabupaten,
                     provinsi
                 )
                 
@@ -1160,7 +1190,7 @@ Magnitudo M{round(float(current['mag']),1)}
                     lokasi_baru = lokasi_detail(
                         current["lat"],
                         current["lon"]
-                    )
+                    )["display"]
 
                     perubahan.append(
                         f"🌐 Lokasi Episenter\n"
