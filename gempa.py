@@ -861,6 +861,7 @@ def lokasi_detail(lat, lon):
             or alamat.get("county")
             or alamat.get("city")
             or alamat.get("city_district")
+            or alamat.get("district")
             or alamat.get("municipality")
             or alamat.get("state_district")
             or alamat.get("town")
