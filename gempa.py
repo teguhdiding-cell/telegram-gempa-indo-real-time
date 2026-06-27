@@ -3,7 +3,7 @@ import os
 import time
 import json
 
-from geolocation import format_koordinat
+from geolocation import format_koordinat, lokasi_perairan
 from sea_database import SEA_DATABASE
 from geopy.geocoders import Nominatim
 from supabase import create_client
