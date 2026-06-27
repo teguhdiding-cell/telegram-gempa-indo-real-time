@@ -698,7 +698,7 @@ def is_land_coordinate(address):
 # =====================================
 
 geolocator = Nominatim(
-    user_agent="gempa-realtime-v12"
+    user_agent="gempa-realtime-v13"
 )
 
 def lokasi_detail(lat, lon):
@@ -814,20 +814,15 @@ def lokasi_detail(lat, lon):
 
     except Exception as e:
 
-        print(
-            "GEO ERROR:",
-            e
-        )
+    print("GEO ERROR:", e)
 
-        laut = lokasi_perairan(lat, lon)
+    hasil = {
+        "kabupaten": "Tidak Diketahui",
+        "provinsi": "",
+        "display": "Lokasi sedang diproses"
+    }
 
-        hasil = {
-            "kabupaten": laut,
-            "provinsi": "",
-            "display": laut
-        }
-        
-        return hasil
+    return hasil
 
 try:
 
