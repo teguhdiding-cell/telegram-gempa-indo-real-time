@@ -654,6 +654,46 @@ def lokasi_perairan(lat, lon):
 
 
 # =====================================
+# DETEKSI DARAT / LAUT V13
+# =====================================
+
+def is_land_coordinate(address):
+
+    if not address:
+        return False
+
+    indikator_darat = [
+
+        "country",
+        "state",
+        "province",
+        "state_district",
+
+        "regency",
+        "county",
+        "city",
+        "municipality",
+
+        "town",
+        "village",
+        "hamlet",
+
+        "suburb",
+        "quarter",
+
+        "road",
+        "residential",
+        "postcode"
+
+    ]
+
+    return any(
+        key in address
+        for key in indikator_darat
+    )
+
+
+# =====================================
 # GEOLOKASI V12
 # =====================================
 
@@ -695,41 +735,71 @@ def lokasi_detail(lat, lon):
 
         alamat = lokasi.raw.get("address", {})
 
+        # ==========================
+        # IDENTIFIKASI DARAT / LAUT
+        # ==========================
+        
+        daratan = is_land_coordinate(alamat)
+        
         kabupaten = (
             alamat.get("regency")
-            or alamat.get("county")
             or alamat.get("city")
+            or alamat.get("county")
+            or alamat.get("municipality")
             or alamat.get("city_district")
             or alamat.get("district")
-            or alamat.get("municipality")
-            or alamat.get("state_district")
             or alamat.get("town")
             or alamat.get("village")
             or alamat.get("hamlet")
-            or "Tidak Diketahui"
         )
-
+        
         provinsi = (
             alamat.get("state")
-            or "Tidak Diketahui"
+            or alamat.get("province")
         )
+        
+        # Jika koordinat berada di daratan tetapi nama kabupaten tidak tersedia,
+        # gunakan provinsi sebagai identitas sementara.
+        if daratan and not kabupaten:
+            kabupaten = provinsi
+        
+        if not provinsi:
+            provinsi = "Tidak Diketahui"
+        
+        if not kabupaten:
+            kabupaten = "Tidak Diketahui"
 
         # ==========================
-        # FORMAT DISPLAY
+        # FORMAT DISPLAY V13
         # ==========================
-
-        if kabupaten != "Tidak Diketahui":
-
-            display = kabupaten
-
-            if provinsi != "Tidak Diketahui":
-                display += "\n" + provinsi
-
+        
+        if daratan:
+        
+            if kabupaten and provinsi and kabupaten != provinsi:
+        
+                display = (
+                    f"{kabupaten}\n"
+                    f"{provinsi}"
+                )
+        
+            elif kabupaten:
+        
+                display = kabupaten
+        
+            elif provinsi:
+        
+                display = provinsi
+        
+            else:
+        
+                display = "Indonesia"
+        
         else:
-
+        
             laut = lokasi_perairan(lat, lon)
         
             kabupaten = laut
+            provinsi = ""
             display = laut
 
         hasil = {
