@@ -874,6 +874,33 @@ def lokasi_detail(lat, lon):
     
         return hasil
 
+
+# =====================================
+# TEST GEOLOKASI
+# =====================================
+
+def test_geolokasi(lat, lon):
+
+    print("\n" + "=" * 60)
+
+    print(f"TEST KOORDINAT")
+    print(f"LAT : {lat}")
+    print(f"LON : {lon}")
+
+    hasil = lokasi_detail(lat, lon)
+
+    print()
+
+    print("KABUPATEN :", hasil["kabupaten"])
+    print("PROVINSI  :", hasil["provinsi"])
+
+    print()
+
+    print("DISPLAY :")
+    print(hasil["display"])
+
+    print("=" * 60 + "\n")
+
 try:
 
     result = (
@@ -897,6 +924,16 @@ cached_id = load_state("last_id")
 print(
     "LAST ID CACHE:",
     cached_id
+)
+
+
+# =====================================
+# MODE TEST
+# =====================================
+
+test_geolokasi(
+    -1.8500,
+    122.7500
 )
 
 
