@@ -3,6 +3,7 @@ import os
 import time
 import json
 
+from geolocation import format_koordinat
 from sea_database import SEA_DATABASE
 from geopy.geocoders import Nominatim
 from supabase import create_client
@@ -545,20 +546,6 @@ def energi_tnt(mag):
 # =====================================
 # KOORDINAT
 # =====================================
-
-def format_koordinat(lat, lon):
-
-    if lat < 0:
-        lat_txt = f"{abs(lat):.4f} LS"
-    else:
-        lat_txt = f"{lat:.4f} LU"
-
-    if lon < 0:
-        lon_txt = f"{abs(lon):.4f} BB"
-    else:
-        lon_txt = f"{lon:.4f} BT"
-
-    return lat_txt, lon_txt
 
 
 # =====================================
