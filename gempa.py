@@ -694,6 +694,50 @@ def is_land_coordinate(address):
 
 
 # =====================================
+# DETEKSI PERAIRAN NOMINATIM V13.1
+# =====================================
+
+def is_water_location(raw):
+
+    category = (
+        raw.get("category", "")
+        .lower()
+    )
+
+    tipe = (
+        raw.get("type", "")
+        .lower()
+    )
+
+    water_categories = {
+
+        "natural",
+        "water"
+
+    }
+
+    water_types = {
+
+        "sea",
+        "ocean",
+        "bay",
+        "strait",
+        "sound",
+        "channel",
+        "reef",
+        "shoal",
+        "water"
+
+    }
+
+    return (
+        category in water_categories
+        and
+        tipe in water_types
+    )
+
+
+# =====================================
 # GEOLOKASI V12
 # =====================================
 
@@ -734,6 +778,12 @@ def lokasi_detail(lat, lon):
             return hasil
 
         alamat = lokasi.raw.get("address", {})
+
+        raw = lokasi.raw
+
+        print("=" * 60)
+        print(json.dumps(raw, indent=2, ensure_ascii=False))
+        print("=" * 60)
 
         # ==========================
         # IDENTIFIKASI DARAT / LAUT
