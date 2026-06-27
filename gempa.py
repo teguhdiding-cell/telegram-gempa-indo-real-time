@@ -1,59 +1,218 @@
 import requests
 import os
 import time
-from datetime import datetime, timedelta
+import json
 from geopy.geocoders import Nominatim
+from supabase import create_client
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+
+# =====================================
+# SUPABASE GENERIC STATE
+# =====================================
+
+def load_state(key):
+
+    try:
+
+        response = (
+            supabase
+            .table("bot_state")
+            .select("value")
+            .eq("key", key)
+            .execute()
+        )
+
+        if response.data:
+
+            return response.data[0]["value"]
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "SUPABASE LOAD STATE ERROR:",
+            e
+        )
+
+        return None
+
+
+def save_state(key, value):
+
+    try:
+
+        supabase.table("bot_state").upsert(
+            {
+                "key": key,
+                "value": value
+            }
+        ).execute()
+
+    except Exception as e:
+
+        print(
+            "SUPABASE SAVE STATE ERROR:",
+            e
+        )
+
+
+# =====================================
+# EARTHQUAKE LOG
+# =====================================
+
+def save_earthquake_log(data, kabupaten, provinsi):
+
+    try:
+
+        supabase.table("earthquake_log").upsert(
+            {
+                "id": data["id"],
+                "waktu": data["time"],
+                "magnitudo": float(data["mag"]),
+                "kedalaman": float(data["depth"]),
+                "fase": int(data["fase"]),
+                "kabupaten": kabupaten,
+                "provinsi": provinsi,
+                "latitude": float(data["lat"]),
+                "longitude": float(data["lon"])
+            }
+        ).execute()
+
+        print(
+            "EARTHQUAKE LOG SAVED:",
+            data["id"]
+        )
+
+    except Exception as e:
+
+        print(
+            "EARTHQUAKE LOG ERROR:",
+            e
+        )
+        
 URL = "https://bmkg-content-inatews.storage.googleapis.com/lastQL.json"
 
 last_data = None
 
 last_event_key = None
 
-LAST_ID_FILE = "last_id.txt"
+last_daily_report = None
 
 geo_cache = {}
 
 
 # =====================================
-# LAST ID CACHE
+# WAKTU WIB
 # =====================================
 
-def load_last_id():
+from datetime import datetime, timedelta, UTC
+
+def now_wib():
+    return datetime.now(UTC) + timedelta(hours=7)
+
+
+# =====================================
+# DAILY REPORT SUPABASE
+# =====================================
+
+def build_daily_report_supabase():
 
     try:
 
-        with open(
-            LAST_ID_FILE,
-            "r"
-        ) as f:
+        hari = now_wib().strftime("%Y-%m-%d")
 
-            return f.read().strip()
+        response = (
+            supabase
+            .table("earthquake_log")
+            .select("kabupaten")
+            .gte("waktu", f"{hari}T00:00:00+07:00")
+            .lt("waktu", f"{hari}T23:59:59+07:00")
+            .execute()
+        )
 
-    except:
+        data = response.data
 
-        return None
+        if not data:
+            return None
 
+        statistik = {}
 
-def save_last_id(gempa_id):
+        for row in data:
 
-    try:
+            kabupaten = row["kabupaten"] or "Tidak Diketahui"
 
-        with open(
-            LAST_ID_FILE,
-            "w"
-        ) as f:
+            statistik[kabupaten] = (
+                statistik.get(kabupaten, 0) + 1
+            )
 
-            f.write(gempa_id)
+        ranking = sorted(
+            statistik.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        total = len(data)
+
+        teks = (
+            "📊 REKAP GEMPA HARIAN\n\n"
+            f"{hari}\n\n"
+            f"🌍 Total Gempa: {total}\n\n"
+        )
+
+        medal = [
+            "🥇",
+            "🥈",
+            "🥉"
+        ]
+
+        for i, (kabupaten, jumlah) in enumerate(ranking[:10]):
+
+            icon = medal[i] if i < 3 else "•"
+
+            teks += (
+                f"{icon} "
+                f"{kabupaten}: "
+                f"{jumlah}\n"
+            )
+
+        teks += (
+            "\n━━━━━━━━━━━━━━\n"
+            "🛰 Sumber: Database Gempa Indonesia"
+        )
+
+        return teks
 
     except Exception as e:
 
         print(
-            "SAVE ID ERROR:",
+            "SUPABASE REPORT ERROR:",
             e
+        )
+
+        return None
+        
+def send_daily_report():
+
+    report = build_daily_report_supabase()
+
+    if report:
+
+        send_message(report)
+
+        print(
+            "REKAP HARIAN TERKIRIM"
         )
 
 
@@ -118,6 +277,163 @@ def send_photo(photo_url, caption):
         print("SEND PHOTO ERROR:", e)
 
         send_message(caption)
+
+
+# =====================================
+# FACEBOOK
+# =====================================
+
+FB_PAGE_ID = os.getenv("FB_PAGE_ID")
+FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
+
+def post_facebook(message, image_url=None):
+
+    try:
+
+        if not FB_PAGE_ID or not FB_PAGE_TOKEN:
+            return
+
+        use_photo = False
+
+        if image_url:
+
+            try:
+
+                cek = requests.head(
+                    image_url,
+                    timeout=10
+                )
+
+                if cek.status_code < 400:
+                    use_photo = True
+
+            except:
+                pass
+
+        if use_photo:
+
+            url = f"https://graph.facebook.com/v25.0/{FB_PAGE_ID}/photos"
+
+            payload = {
+                "url": image_url,
+                "caption": message,
+                "access_token": FB_PAGE_TOKEN
+            }
+
+        else:
+
+            url = f"https://graph.facebook.com/v25.0/{FB_PAGE_ID}/feed"
+
+            payload = {
+                "message": message,
+                "access_token": FB_PAGE_TOKEN
+            }
+
+        r = requests.post(
+            url,
+            data=payload,
+            timeout=30
+        )
+
+        print(
+            "FACEBOOK:",
+            r.status_code
+        )
+
+        print(
+            "FACEBOOK RESPONSE:",
+            r.text
+        )
+
+        if r.status_code == 200:
+
+            try:
+
+                data_fb = r.json()
+
+                if "id" in data_fb:
+
+                    save_state("fb_post_id", data_fb["id"])
+                    
+                    save_state(
+                        "fb_post_text",
+                        message
+                    )
+
+                    print(
+                        "FB POST ID DISIMPAN:",
+                        data_fb["id"]
+                    )
+
+            except Exception as e:
+
+                print(
+                    "SAVE FB CACHE ERROR:",
+                    e
+                )
+
+    except Exception as e:
+
+        print(
+            "FACEBOOK ERROR:",
+            e
+        )
+
+def edit_facebook_post(post_id, message):
+
+    try:
+
+        if not post_id:
+            return
+
+        url = (
+            f"https://graph.facebook.com/v25.0/"
+            f"{post_id}"
+        )
+
+        payload = {
+            "message": message,
+            "access_token": FB_PAGE_TOKEN
+        }
+
+        r = requests.post(
+            url,
+            data=payload,
+            timeout=30
+        )
+
+        print(
+            "FACEBOOK EDIT:",
+            r.status_code
+        )
+
+        print(
+            "FACEBOOK EDIT RESPONSE:",
+            r.text
+        )
+
+        if r.status_code == 200:
+
+            pass
+
+    except Exception as e:
+
+        print(
+            "FACEBOOK EDIT ERROR:",
+            e
+        )
+
+
+# ==========================
+# SHAKEMAP
+# ==========================
+
+def get_shakemap_url(gempa_id):
+
+    return (
+        "https://bmkg-content-inatews.storage.googleapis.com/"
+        f"mt.{gempa_id}.png"
+    )
 
 
 # =====================================
@@ -242,12 +558,211 @@ def format_koordinat(lat, lon):
 
     return lat_txt, lon_txt
 
+
 # =====================================
-# GEOLOKASI V9
+# DATABASE PERAIRAN INDONESIA V1
+# =====================================
+
+def lokasi_perairan(lat, lon):
+
+    wilayah = [
+
+        {
+            "nama": "🌊 Samudra Hindia\nSelatan Pulau Jawa",
+            "lat_min": -15,
+            "lat_max": -7,
+            "lon_min": 104,
+            "lon_max": 116
+        },
+
+        {
+            "nama": "🌊 Samudra Hindia\nSelatan Nusa Tenggara",
+            "lat_min": -15,
+            "lat_max": -7,
+            "lon_min": 116,
+            "lon_max": 126
+        },
+
+        {
+            "nama": "🌊 Laut Jawa",
+            "lat_min": -8,
+            "lat_max": -4,
+            "lon_min": 105,
+            "lon_max": 116
+        },
+
+        {
+            "nama": "🌊 Laut Flores",
+            "lat_min": -9,
+            "lat_max": -6,
+            "lon_min": 118,
+            "lon_max": 123
+        },
+
+        {
+            "nama": "🌊 Laut Banda",
+            "lat_min": -8,
+            "lat_max": -3,
+            "lon_min": 124,
+            "lon_max": 132
+        },
+
+        {
+            "nama": "🌊 Laut Maluku",
+            "lat_min": -2,
+            "lat_max": 3,
+            "lon_min": 125,
+            "lon_max": 130
+        },
+
+        {
+            "nama": "🌊 Laut Sulawesi",
+            "lat_min": 0,
+            "lat_max": 6,
+            "lon_min": 119,
+            "lon_max": 126
+        },
+
+        {
+            "nama": "🌊 Laut Seram",
+            "lat_min": -4,
+            "lat_max": -1,
+            "lon_min": 128,
+            "lon_max": 133
+        },
+
+        {
+            "nama": "🌊 Laut Arafura",
+            "lat_min": -11,
+            "lat_max": -6,
+            "lon_min": 132,
+            "lon_max": 141
+        }
+
+    ]
+
+    cocok = []
+
+    for laut in wilayah:
+    
+        if (
+            laut["lat_min"] <= lat <= laut["lat_max"]
+            and
+            laut["lon_min"] <= lon <= laut["lon_max"]
+        ):
+    
+            luas = (
+                (laut["lat_max"] - laut["lat_min"])
+                *
+                (laut["lon_max"] - laut["lon_min"])
+            )
+    
+            cocok.append(
+                (
+                    luas,
+                    laut["nama"]
+                )
+            )
+    
+    if cocok:
+    
+        cocok.sort(key=lambda x: x[0])
+    
+        return cocok[0][1]
+    
+    return "🌊 Perairan Indonesia"
+
+
+# =====================================
+# DETEKSI DARAT / LAUT V13
+# =====================================
+
+def is_land_coordinate(address):
+
+    if not address:
+        return False
+
+    indikator_darat = [
+
+        "country",
+        "state",
+        "province",
+        "state_district",
+
+        "regency",
+        "county",
+        "city",
+        "municipality",
+
+        "town",
+        "village",
+        "hamlet",
+
+        "suburb",
+        "quarter",
+
+        "road",
+        "residential",
+        "postcode"
+
+    ]
+
+    return any(
+        key in address
+        for key in indikator_darat
+    )
+
+
+# =====================================
+# DETEKSI PERAIRAN NOMINATIM V13.1
+# =====================================
+
+def is_water_location(raw):
+
+    category = (
+        raw.get("category", "")
+        .lower()
+    )
+
+    tipe = (
+        raw.get("type", "")
+        .lower()
+    )
+
+    water_categories = {
+
+        "natural",
+        "water"
+
+    }
+
+    water_types = {
+
+        "sea",
+        "ocean",
+        "bay",
+        "strait",
+        "sound",
+        "channel",
+        "reef",
+        "shoal",
+        "water"
+
+    }
+
+    return (
+        category in water_categories
+        and
+        tipe in water_types
+    )
+
+
+# =====================================
+# GEOLOKASI V12
 # =====================================
 
 geolocator = Nominatim(
-    user_agent="gempa-realtime-v9"
+    user_agent="gempa-realtime-v13"
 )
 
 def lokasi_detail(lat, lon):
@@ -259,7 +774,7 @@ def lokasi_detail(lat, lon):
 
     if key in geo_cache:
         return geo_cache[key]
-        
+
     try:
 
         lokasi = geolocator.reverse(
@@ -269,50 +784,274 @@ def lokasi_detail(lat, lon):
         )
 
         if not lokasi:
-            return "Indonesia"
 
-        alamat = lokasi.raw["address"]
+            laut = lokasi_perairan(lat, lon)
+        
+            hasil = {
+                "kabupaten": laut,
+                "provinsi": "",
+                "display": laut
+            }
+        
+            geo_cache[key] = hasil
+        
+            return hasil
 
+        alamat = lokasi.raw.get("address", {})
+
+        raw = lokasi.raw
+
+        print("=" * 60)
+        print(json.dumps(raw, indent=2, ensure_ascii=False))
+        print("=" * 60)
+
+        # ==========================
+        # IDENTIFIKASI ADMINISTRASI
+        # ==========================
+        
         kabupaten = (
-            alamat.get("county")
+            alamat.get("regency")
             or alamat.get("city")
+            or alamat.get("county")
             or alamat.get("municipality")
-            or alamat.get("state_district")
-            or ""
+            or alamat.get("city_district")
+            or alamat.get("district")
+            or alamat.get("town")
+            or alamat.get("village")
+            or alamat.get("hamlet")
         )
-
-        provinsi = alamat.get("state", "")
-
-        hasil = []
-
+        
+        provinsi = (
+            alamat.get("state")
+            or alamat.get("province")
+        )
+        
+        laut = lokasi_perairan(lat, lon)
+        
+        # ==========================
+        # PRIORITAS HASIL V14
+        # ==========================
+        
         if kabupaten:
-            hasil.append(kabupaten)
+        
+            display = kabupaten
+        
+            if provinsi and provinsi != kabupaten:
+                display += "\n" + provinsi
+        
+        elif laut != "🌊 Perairan Indonesia":
+        
+            kabupaten = laut
+            provinsi = ""
+            display = laut
+        
+        elif provinsi:
+        
+            kabupaten = provinsi
+            display = provinsi
+        
+        else:
+        
+            kabupaten = "Tidak Diketahui"
+            provinsi = ""
+            display = "Tidak Diketahui"
 
-        if provinsi:
-            hasil.append(provinsi)
+        hasil = {
+            "kabupaten": kabupaten,
+            "provinsi": provinsi,
+            "display": display
+        }
 
-        if hasil:
-            hasil_text = "\n".join(hasil)
-            geo_cache[key] = hasil_text
-            return hasil_text
+        geo_cache[key] = hasil
 
-        return lokasi.address
+        return hasil
 
     except Exception as e:
 
         print("GEO ERROR:", e)
+    
+        hasil = {
+            "kabupaten": "Tidak Diketahui",
+            "provinsi": "",
+            "display": "Lokasi sedang diproses"
+        }
+    
+        return hasil
 
-        return "Indonesia"
 
+# =====================================
+# TEST GEOLOKASI
+# =====================================
 
-print("Bot Gempa V9 berjalan...")
+def test_geolokasi(lat, lon):
 
-cached_id = load_last_id()
+    print("\n" + "=" * 60)
+
+    print(f"TEST KOORDINAT")
+    print(f"LAT : {lat}")
+    print(f"LON : {lon}")
+
+    hasil = lokasi_detail(lat, lon)
+
+    print()
+
+    print("KABUPATEN :", hasil["kabupaten"])
+    print("PROVINSI  :", hasil["provinsi"])
+
+    print()
+
+    print("DISPLAY :")
+    print(hasil["display"])
+
+    print("=" * 60 + "\n")
+
+    return hasil
+
+try:
+
+    result = (
+        supabase
+        .table("bot_state")
+        .select("*")
+        .limit(1)
+        .execute()
+    )
+
+    print("SUPABASE CONNECTED")
+
+except Exception as e:
+
+    print("SUPABASE ERROR:", e)
+
+print("Bot Gempa Indonesia V12.1 berjalan...")
+
+cached_id = load_state("last_id")
 
 print(
     "LAST ID CACHE:",
     cached_id
 )
+
+
+# =====================================
+# MODE TEST GEOLOKASI
+# =====================================
+
+TEST_MODE = True
+
+TEST_POINTS = [
+
+    ("Bondowoso",
+     -7.9136,
+     113.8215,
+     "Bondowoso"),
+
+    ("Yogyakarta",
+     -7.8014,
+     110.3647,
+     "Kota Yogyakarta"),
+
+    ("Palu",
+     -0.8917,
+     119.8707,
+     "Palu"),
+
+    ("Laut Banda",
+     -6.3188,
+     130.3692,
+     "Laut Banda"),
+
+    ("Samudra Hindia",
+     -10.3500,
+     109.8000,
+     "Samudra Hindia"),
+
+    ("Laut Flores",
+     -7.8000,
+     121.5000,
+     "Laut Flores"),
+
+    ("Laut Sulawesi",
+     2.0000,
+     122.5000,
+     "Laut Sulawesi"),
+
+    ("Dekat Sulawesi",
+     -1.8500,
+     122.7500,
+     "Sulawesi Tengah"),
+
+    ("Laut Maluku",
+     1.2500,
+     126.3000,
+     "Laut Maluku"),
+
+    ("Halmahera",
+     0.5000,
+     128.5000,
+     "Halmahera Timur"),
+
+]
+
+if TEST_MODE:
+
+    print("\n")
+    print("=" * 80)
+    print("MEMULAI TEST GEOLOKASI")
+    print("=" * 80)
+
+    import time
+
+    pass_count = 0
+    fail_count = 0
+
+    for nama, lat, lon, expected in TEST_POINTS:
+
+        print(f"\n### {nama}")
+    
+        hasil = test_geolokasi(lat, lon)
+    
+        display = hasil["display"]
+    
+        if expected.lower() in display.lower():
+
+            print("EXPECTED :", expected)
+            print("HASIL    :", display)
+            print("STATUS   : PASS")
+        
+            pass_count += 1
+        
+        else:
+        
+            print("EXPECTED :", expected)
+            print("HASIL    :", display)
+            print("STATUS   : FAIL")
+        
+            fail_count += 1
+    
+        time.sleep(2)
+
+    print()
+    print("=" * 80)
+    print("RINGKASAN TEST")
+    print("=" * 80)
+        
+    print("PASS :", pass_count)
+    print("FAIL :", fail_count)
+        
+    total = pass_count + fail_count
+        
+    if total > 0:
+        print(
+            "AKURASI :",
+            f"{(pass_count / total) * 100:.1f}%"
+        )
+
+    print("=" * 80)
+    print("TEST SELESAI")
+    print("=" * 80)
+
+    raise SystemExit("MODE TEST SELESAI")
 
 
 # =====================================
@@ -323,7 +1062,23 @@ while True:
 
     try:
 
-        data = requests.get(URL, timeout=30).json()
+        now = now_wib()
+
+        jam = now.strftime("%H:%M")
+
+        print(
+            "JAM PYTHON:",
+            jam
+        )
+
+        hari = now.strftime(
+        "%Y-%m-%d"
+        )
+
+        data = requests.get(
+            URL,
+            timeout=30
+        ).json()
 
         gempa = data["features"][0]
 
@@ -364,7 +1119,8 @@ while True:
 
             else:
 
-                save_last_id(
+                save_state(
+                    "last_id",
                     current["id"]
                 )
 
@@ -410,11 +1166,27 @@ while True:
                     f"mt.{current['id']}.png"
                 )
 
-                lokasi_pro = lokasi_detail(
+                lokasi = lokasi_detail(
                     current["lat"],
                     current["lon"]
                 )
-
+                
+                lokasi_pro = lokasi["display"]
+                
+                kabupaten = lokasi["kabupaten"]
+                
+                provinsi = lokasi["provinsi"]
+                
+                print(
+                    "KABUPATEN:",
+                    kabupaten
+                )
+                
+                print(
+                    "PROVINSI:",
+                    provinsi
+                )
+                
                 caption = f"""
 🚨 GEMPA REALTIME InaTEWS
 
@@ -453,11 +1225,32 @@ Fase ke-{current['fase']}
 #GEMPAdanCUACA
 """
 
-                send_message(caption)
+                # update_daily_stats(
+                #    kabupaten
+                # )
+                
+                save_earthquake_log(
+                    current,
+                    kabupaten,
+                    provinsi
+                )
+                
+                send_photo(
+                    photo_url,
+                    caption
+                )
+
+                post_facebook(
+                    caption,
+                    get_shakemap_url(current["id"])
+                )
 
                 print("GEMPA BARU DIKIRIM")
 
-                save_last_id(current["id"])
+                save_state(
+                    "last_id",
+                    current["id"]
+                )
                 cached_id = current["id"]
 
                 print(
@@ -528,7 +1321,7 @@ Magnitudo M{round(float(current['mag']),1)}
                     lokasi_baru = lokasi_detail(
                         current["lat"],
                         current["lon"]
-                    )
+                    )["display"]
 
                     perubahan.append(
                         f"🌐 Lokasi Episenter\n"
@@ -556,14 +1349,62 @@ Magnitudo M{round(float(current['mag']),1)}
 
                     send_message(pesan)
 
+                    fb_post_id = load_state("fb_post_id")
+                
+                    old_text = load_state("fb_post_text")
+
+                    if old_text is None:
+                        old_text = ""
+                
+                    update_number = (
+                        old_text.count("🔄 UPDATE #")
+                        + 1
+                    )
+
+                    new_text = (
+                        old_text
+                        + "\n\n━━━━━━━━━━━━━━\n\n"
+                        + f"🔄 UPDATE #{update_number}\n\n"
+                        + pesan
+                    )
+
+                    print(
+                        "FB TEXT LENGTH:",
+                        len(new_text)
+                    )
+                    
+                    edit_facebook_post(
+                        fb_post_id,
+                        new_text
+                    )
+
+                    save_state(
+                        "fb_post_text",
+                        new_text
+                    )
+                    
                     print("UPDATE PARAMETER")
 
 
             last_data = current
             last_event_key = event_key
+
+            # ==========================
+            # REKAP HARIAN
+            # ==========================
+            
+            if jam == "19:33":
+            
+                if last_daily_report != hari:
+            
+                    print("JAM COCOK")
+            
+                    send_daily_report()
+            
+                    last_daily_report = hari
     
     except Exception as e:
 
         print("ERROR:", e)
 
-    time.sleep(5)
+    time.sleep(10)
