@@ -162,205 +162,6 @@ def init_db():
 
     conn.close()
 
-# =====================================
-# DAILY STATS
-# =====================================
-
-def load_daily_stats():
-
-    try:
-
-        with open(
-            "daily_stats.json",
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            return json.load(f)
-
-    except:
-
-        return {}
-
-
-def save_daily_stats(data):
-
-    with open(
-        "daily_stats.json",
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            data,
-            f,
-            ensure_ascii=False,
-            indent=2
-        )
-
-
-def get_provinsi_only(lokasi_text):
-
-    if not lokasi_text:
-        return "Tidak Diketahui"
-
-    baris = [
-        x.strip()
-        for x in lokasi_text.split("\n")
-        if x.strip()
-    ]
-
-    if len(baris) == 0:
-        return "Tidak Diketahui"
-
-    return baris[-1]
-
-
-def update_daily_stats(kabupaten):
-
-    hari = now_wib().strftime("%Y-%m-%d")
-
-    conn = sqlite3.connect(DB_FILE)
-
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        INSERT INTO daily_stats
-        (tanggal, provinsi, jumlah)
-
-        VALUES (?, ?, 1)
-
-        ON CONFLICT(tanggal, provinsi)
-
-        DO UPDATE SET
-
-        jumlah = jumlah + 1
-        """,
-        (
-            hari,
-            kabupaten
-        )
-    )
-
-    conn.commit()
-
-    cur.execute("""
-    SELECT COUNT(*)
-    FROM daily_stats
-    """)
-
-    print(
-        "JUMLAH DATA DATABASE:",
-        cur.fetchone()[0]
-    )
-
-    cur.execute(
-        "SELECT * FROM daily_stats"
-    )
-
-    print(
-        "ISI DATABASE:",
-        cur.fetchall()
-    )
-
-    cur.execute(
-        """
-        SELECT jumlah
-        FROM daily_stats
-        WHERE tanggal=?
-        AND provinsi=?
-        """,
-        (
-            hari,
-            kabupaten
-        )
-    )
-
-    total = cur.fetchone()[0]
-
-    conn.close()
-
-    print(
-        "STAT HARIAN:",
-        kabupaten,
-        "=",
-        total
-    )
-
-def build_daily_report():
-
-    hari = now_wib().strftime(
-        "%Y-%m-%d"
-    )
-
-    conn = sqlite3.connect(DB_FILE)
-
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM daily_stats")
-
-    cur.execute(
-        """
-        SELECT provinsi, jumlah
-        FROM daily_stats
-        WHERE tanggal=?
-        ORDER BY jumlah DESC
-        """,
-        (hari,)
-    )
-
-    ranking = cur.fetchall()
-
-    conn.close()
-
-    if not ranking:
-
-        return None
-
-    total = sum(
-        row[1]
-        for row in ranking
-    )
-
-    teks = (
-        "📊 REKAP GEMPA HARIAN\n\n"
-        f"{hari}\n\n"
-        f"🌍 Total Gempa: {total}\n\n"
-    )
-
-    medal = [
-        "🥇",
-        "🥈",
-        "🥉"
-    ]
-
-    for i, row in enumerate(
-        ranking[:10]
-    ):
-
-        provinsi = row[0]
-        jumlah = row[1]
-
-        icon = (
-            medal[i]
-            if i < 3
-            else "•"
-        )
-
-        teks += (
-            f"{icon} "
-            f"{provinsi}: "
-            f"{jumlah}\n"
-        )
-
-    teks += (
-        "\n━━━━━━━━━━━━━━\n"
-        "🛰 Sumber: InaTEWS BMKG"
-    )
-
-    return teks
-
 
 # =====================================
 # DAILY REPORT SUPABASE
@@ -990,12 +791,14 @@ def lokasi_detail(lat, lon):
             e
         )
 
-        hasil = {
-            "kabupaten": "Indonesia",
-            "provinsi": "Tidak Diketahui",
-            "display": "Indonesia"
-        }
+        laut = lokasi_perairan(lat, lon)
 
+        hasil = {
+            "kabupaten": laut,
+            "provinsi": "",
+            "display": laut
+        }
+        
         return hasil
 
 try:
@@ -1195,9 +998,9 @@ Fase ke-{current['fase']}
 #GEMPAdanCUACA
 """
 
-                update_daily_stats(
-                    kabupaten
-                )
+                # update_daily_stats(
+                #    kabupaten
+                # )
                 
                 save_earthquake_log(
                     current,
