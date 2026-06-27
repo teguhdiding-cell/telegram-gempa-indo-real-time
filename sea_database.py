@@ -1,1 +1,2 @@
-
+SEA_DATABASE = [
+]
