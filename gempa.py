@@ -814,15 +814,15 @@ def lokasi_detail(lat, lon):
 
     except Exception as e:
 
-    print("GEO ERROR:", e)
-
-    hasil = {
-        "kabupaten": "Tidak Diketahui",
-        "provinsi": "",
-        "display": "Lokasi sedang diproses"
-    }
-
-    return hasil
+        print("GEO ERROR:", e)
+    
+        hasil = {
+            "kabupaten": "Tidak Diketahui",
+            "provinsi": "",
+            "display": "Lokasi sedang diproses"
+        }
+    
+        return hasil
 
 try:
 
