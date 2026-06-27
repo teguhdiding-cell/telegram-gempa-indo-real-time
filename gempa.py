@@ -2,6 +2,8 @@ import requests
 import os
 import time
 import json
+
+from sea_database import SEA_DATABASE
 from geopy.geocoders import Nominatim
 from supabase import create_client
 
