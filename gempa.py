@@ -2,8 +2,6 @@ import requests
 import os
 import time
 import json
-import sqlite3
-from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
 from supabase import create_client
 
@@ -114,8 +112,6 @@ last_daily_report = None
 
 geo_cache = {}
 
-DB_FILE = "gempa.db"
-
 
 # =====================================
 # WAKTU WIB
@@ -125,42 +121,6 @@ from datetime import datetime, timedelta, UTC
 
 def now_wib():
     return datetime.now(UTC) + timedelta(hours=7)
-    
-
-# =====================================
-# SQLITE
-# =====================================
-
-def init_db():
-
-    conn = sqlite3.connect(DB_FILE)
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS daily_stats (
-        tanggal TEXT,
-        provinsi TEXT,
-        jumlah INTEGER,
-        PRIMARY KEY (tanggal, provinsi)
-    )
-    """)
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS daily_report_status (
-        tanggal TEXT PRIMARY KEY,
-        sent INTEGER DEFAULT 0
-    )
-    """)
-
-    conn.commit()
-
-    # BARU CEK
-    cur.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-    )
-
-    conn.close()
 
 
 # =====================================
@@ -243,18 +203,16 @@ def build_daily_report_supabase():
 
         return None
         
-def test_daily_report():
+def send_daily_report():
 
     report = build_daily_report_supabase()
-
-    print(report)
 
     if report:
 
         send_message(report)
 
         print(
-            "TEST REKAP TERKIRIM"
+            "REKAP HARIAN TERKIRIM"
         )
 
 
@@ -1172,7 +1130,7 @@ Magnitudo M{round(float(current['mag']),1)}
             
                     print("JAM COCOK")
             
-                    test_daily_report()
+                    send_daily_report()
             
                     last_daily_report = hari
     
