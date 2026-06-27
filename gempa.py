@@ -928,13 +928,53 @@ print(
 
 
 # =====================================
-# MODE TEST
+# MODE TEST GEOLOKASI
 # =====================================
 
-test_geolokasi(
-    -1.8500,
-    122.7500
-)
+TEST_MODE = True
+
+TEST_POINTS = [
+
+    ("Bondowoso", -7.9136, 113.8215),
+
+    ("Yogyakarta", -7.8014, 110.3647),
+
+    ("Palu", -0.8917, 119.8707),
+
+    ("Laut Banda", -6.3188, 130.3692),
+
+    ("Samudra Hindia", -10.3500, 109.8000),
+
+    ("Laut Flores", -7.8000, 121.5000),
+
+    ("Laut Sulawesi", 2.0000, 122.5000),
+
+    ("Dekat Sulawesi", -1.8500, 122.7500),
+
+    ("Laut Maluku", 1.2500, 126.3000),
+
+    ("Halmahera", 0.5000, 128.5000),
+
+]
+
+if TEST_MODE:
+
+    print("\n")
+    print("=" * 80)
+    print("MEMULAI TEST GEOLOKASI")
+    print("=" * 80)
+
+    for nama, lat, lon in TEST_POINTS:
+
+        print(f"\n### {nama}")
+
+        test_geolokasi(lat, lon)
+
+    print("=" * 80)
+    print("TEST SELESAI")
+    print("=" * 80)
+
+    raise SystemExit("MODE TEST SELESAI")
 
 
 # =====================================
