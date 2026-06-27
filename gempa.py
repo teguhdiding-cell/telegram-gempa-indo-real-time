@@ -160,9 +160,6 @@ def init_db():
         "SELECT name FROM sqlite_master WHERE type='table'"
     )
 
-    print("DATABASE:", DB_FILE)
-    print("TABLE:", cur.fetchall())
-
     conn.close()
 
 # =====================================
@@ -303,11 +300,6 @@ def build_daily_report():
 
     cur.execute("SELECT * FROM daily_stats")
 
-    print(
-        "SEMUA DATA:",
-        cur.fetchall()
-    )
-
     cur.execute(
         """
         SELECT provinsi, jumlah
@@ -321,8 +313,6 @@ def build_daily_report():
     ranking = cur.fetchall()
 
     conn.close()
-
-    print("HASIL QUERY:", ranking)
 
     if not ranking:
 
@@ -368,8 +358,6 @@ def build_daily_report():
         "\n━━━━━━━━━━━━━━\n"
         "🛰 Sumber: InaTEWS BMKG"
     )
-
-    print("REKAP BERHASIL DIBUAT")
 
     return teks
 
@@ -948,11 +936,6 @@ def lokasi_detail(lat, lon):
 
         alamat = lokasi.raw.get("address", {})
 
-        print("=" * 60)
-        print("RAW ADDRESS NOMINATIM")
-        print(json.dumps(alamat, indent=2, ensure_ascii=False))
-        print("=" * 60)
-
         kabupaten = (
             alamat.get("regency")
             or alamat.get("county")
@@ -1015,63 +998,6 @@ def lokasi_detail(lat, lon):
 
         return hasil
 
-
-# =====================================
-# TEST NOMINATIM
-# =====================================
-
-def test_nominatim(lat, lon):
-
-    print("\n")
-    print("=" * 70)
-    print("TEST NOMINATIM")
-    print(f"LAT : {lat}")
-    print(f"LON : {lon}")
-    print("=" * 70)
-
-    try:
-
-        lokasi = geolocator.reverse(
-            f"{lat},{lon}",
-            language="id",
-            timeout=10
-        )
-
-        if lokasi is None:
-
-            print("HASIL : TIDAK ADA")
-            return
-
-        print("\nRAW DATA")
-
-        print(
-            json.dumps(
-                lokasi.raw,
-                indent=4,
-                ensure_ascii=False
-            )
-        )
-
-        print("\nADDRESS")
-
-        print(
-            json.dumps(
-                lokasi.raw.get("address", {}),
-                indent=4,
-                ensure_ascii=False
-            )
-        )
-
-    except Exception as e:
-
-        print("ERROR :", e)
-
-    print("=" * 70)
-    print("\n")
-    
-
-init_db()
-
 try:
 
     result = (
@@ -1088,7 +1014,7 @@ except Exception as e:
 
     print("SUPABASE ERROR:", e)
 
-print("Bot Gempa V11 berjalan...")
+print("Bot Gempa Indonesia V12.1 berjalan...")
 
 cached_id = load_state("last_id")
 
@@ -1096,12 +1022,6 @@ print(
     "LAST ID CACHE:",
     cached_id
 )
-
-# =====================================
-# TEST KOORDINAT
-# =====================================
-
-print(lokasi_perairan(-10.485366,110.489494))
 
 
 # =====================================
