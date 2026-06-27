@@ -786,10 +786,8 @@ def lokasi_detail(lat, lon):
         print("=" * 60)
 
         # ==========================
-        # IDENTIFIKASI DARAT / LAUT
+        # IDENTIFIKASI ADMINISTRASI
         # ==========================
-        
-        daratan = is_land_coordinate(alamat)
         
         kabupaten = (
             alamat.get("regency")
@@ -808,49 +806,35 @@ def lokasi_detail(lat, lon):
             or alamat.get("province")
         )
         
-        # Jika koordinat berada di daratan tetapi nama kabupaten tidak tersedia,
-        # gunakan provinsi sebagai identitas sementara.
-        if daratan and not kabupaten:
-            kabupaten = provinsi
+        laut = lokasi_perairan(lat, lon)
         
-        if not provinsi:
-            provinsi = "Tidak Diketahui"
-        
-        if not kabupaten:
-            kabupaten = "Tidak Diketahui"
-
         # ==========================
-        # FORMAT DISPLAY V13
+        # PRIORITAS HASIL V14
         # ==========================
         
-        if daratan:
+        if kabupaten:
         
-            if kabupaten and provinsi and kabupaten != provinsi:
+            display = kabupaten
         
-                display = (
-                    f"{kabupaten}\n"
-                    f"{provinsi}"
-                )
+            if provinsi and provinsi != kabupaten:
+                display += "\n" + provinsi
         
-            elif kabupaten:
-        
-                display = kabupaten
-        
-            elif provinsi:
-        
-                display = provinsi
-        
-            else:
-        
-                display = "Indonesia"
-        
-        else:
-        
-            laut = lokasi_perairan(lat, lon)
+        elif laut != "🌊 Perairan Indonesia":
         
             kabupaten = laut
             provinsi = ""
             display = laut
+        
+        elif provinsi:
+        
+            kabupaten = provinsi
+            display = provinsi
+        
+        else:
+        
+            kabupaten = "Tidak Diketahui"
+            provinsi = ""
+            display = "Tidak Diketahui"
 
         hasil = {
             "kabupaten": kabupaten,
