@@ -901,6 +901,8 @@ def test_geolokasi(lat, lon):
 
     print("=" * 60 + "\n")
 
+    return hasil
+
 try:
 
     result = (
@@ -935,25 +937,55 @@ TEST_MODE = True
 
 TEST_POINTS = [
 
-    ("Bondowoso", -7.9136, 113.8215),
+    ("Bondowoso",
+     -7.9136,
+     113.8215,
+     "Bondowoso"),
 
-    ("Yogyakarta", -7.8014, 110.3647),
+    ("Yogyakarta",
+     -7.8014,
+     110.3647,
+     "Kota Yogyakarta"),
 
-    ("Palu", -0.8917, 119.8707),
+    ("Palu",
+     -0.8917,
+     119.8707,
+     "Palu"),
 
-    ("Laut Banda", -6.3188, 130.3692),
+    ("Laut Banda",
+     -6.3188,
+     130.3692,
+     "Laut Banda"),
 
-    ("Samudra Hindia", -10.3500, 109.8000),
+    ("Samudra Hindia",
+     -10.3500,
+     109.8000,
+     "Samudra Hindia"),
 
-    ("Laut Flores", -7.8000, 121.5000),
+    ("Laut Flores",
+     -7.8000,
+     121.5000,
+     "Laut Flores"),
 
-    ("Laut Sulawesi", 2.0000, 122.5000),
+    ("Laut Sulawesi",
+     2.0000,
+     122.5000,
+     "Laut Sulawesi"),
 
-    ("Dekat Sulawesi", -1.8500, 122.7500),
+    ("Dekat Sulawesi",
+     -1.8500,
+     122.7500,
+     "Sulawesi Tengah"),
 
-    ("Laut Maluku", 1.2500, 126.3000),
+    ("Laut Maluku",
+     1.2500,
+     126.3000,
+     "Laut Maluku"),
 
-    ("Halmahera", 0.5000, 128.5000),
+    ("Halmahera",
+     0.5000,
+     128.5000,
+     "Halmahera Timur"),
 
 ]
 
@@ -964,11 +996,52 @@ if TEST_MODE:
     print("MEMULAI TEST GEOLOKASI")
     print("=" * 80)
 
-    for nama, lat, lon in TEST_POINTS:
+    import time
+
+    pass_count = 0
+    fail_count = 0
+
+    for nama, lat, lon, expected in TEST_POINTS:
 
         print(f"\n### {nama}")
+    
+        hasil = test_geolokasi(lat, lon)
+    
+        display = hasil["display"]
+    
+        if expected.lower() in display.lower():
 
-        test_geolokasi(lat, lon)
+            print("EXPECTED :", expected)
+            print("HASIL    :", display)
+            print("STATUS   : PASS")
+        
+            pass_count += 1
+        
+        else:
+        
+            print("EXPECTED :", expected)
+            print("HASIL    :", display)
+            print("STATUS   : FAIL")
+        
+            fail_count += 1
+    
+        time.sleep(2)
+
+    print()
+    print("=" * 80)
+    print("RINGKASAN TEST")
+    print("=" * 80)
+        
+    print("PASS :", pass_count)
+    print("FAIL :", fail_count)
+        
+    total = pass_count + fail_count
+        
+    if total > 0:
+        print(
+            "AKURASI :",
+            f"{(pass_count / total) * 100:.1f}%"
+        )
 
     print("=" * 80)
     print("TEST SELESAI")
