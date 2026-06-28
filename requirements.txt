@@ -1,3 +1,6 @@
 requests
 geopy
 supabase
+python-dotenv
+shapely
+pyshp
