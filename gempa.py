@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from geolocation import format_koordinat, lokasi_perairan
-from sea_database import SEA_DATABASE
 from geopy.geocoders import Nominatim
 from supabase import create_client
 
@@ -550,46 +549,6 @@ def energi_tnt(mag):
 # =====================================
 # KOORDINAT
 # =====================================
-
-
-# =====================================
-# DATABASE PERAIRAN INDONESIA V1
-# =====================================
-
-def lokasi_perairan(lat, lon):
-
-    wilayah = SEA_DATABASE
-
-    cocok = []
-
-    for laut in wilayah:
-    
-        if (
-            laut["lat_min"] <= lat <= laut["lat_max"]
-            and
-            laut["lon_min"] <= lon <= laut["lon_max"]
-        ):
-    
-            luas = (
-                (laut["lat_max"] - laut["lat_min"])
-                *
-                (laut["lon_max"] - laut["lon_min"])
-            )
-    
-            cocok.append(
-                (
-                    luas,
-                    laut["nama"]
-                )
-            )
-    
-    if cocok:
-    
-        cocok.sort(key=lambda x: x[0])
-    
-        return cocok[0][1]
-    
-    return "🌊 Perairan Indonesia"
 
 
 # =====================================
