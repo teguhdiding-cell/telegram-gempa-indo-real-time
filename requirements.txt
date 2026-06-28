@@ -1,6 +1,6 @@
 requests
-geopy
-supabase
 python-dotenv
+supabase
+geopy
 shapely
 pyshp

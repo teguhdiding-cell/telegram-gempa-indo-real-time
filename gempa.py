@@ -3,11 +3,12 @@ import os
 import time
 import json
 
+from core.geo_engine import locate
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from geolocation import format_koordinat, lokasi_perairan
+from core.geolocation import format_koordinat
 from geopy.geocoders import Nominatim
 from supabase import create_client
 
@@ -653,6 +654,8 @@ def lokasi_detail(lat, lon):
     if key in geo_cache:
         return geo_cache[key]
 
+    geo = locate(lat, lon)
+
     try:
 
         lokasi = geolocator.reverse(
@@ -663,7 +666,7 @@ def lokasi_detail(lat, lon):
 
         if not lokasi:
 
-            laut = lokasi_perairan(lat, lon)
+            laut = geo["sea"]
         
             hasil = {
                 "kabupaten": laut,
@@ -699,12 +702,9 @@ def lokasi_detail(lat, lon):
             or alamat.get("hamlet")
         )
         
-        provinsi = (
-            alamat.get("state")
-            or alamat.get("province")
-        )
+        provinsi = geo["province"]
         
-        laut = lokasi_perairan(lat, lon)
+        laut = geo["sea"]
         
         # ==========================
         # PRIORITAS HASIL V14
@@ -755,181 +755,6 @@ def lokasi_detail(lat, lon):
         }
     
         return hasil
-
-
-# =====================================
-# TEST GEOLOKASI
-# =====================================
-
-def test_geolokasi(lat, lon):
-
-    print("\n" + "=" * 60)
-
-    print(f"TEST KOORDINAT")
-    print(f"LAT : {lat}")
-    print(f"LON : {lon}")
-
-    hasil = lokasi_detail(lat, lon)
-
-    print()
-
-    print("KABUPATEN :", hasil["kabupaten"])
-    print("PROVINSI  :", hasil["provinsi"])
-
-    print()
-
-    print("DISPLAY :")
-    print(hasil["display"])
-
-    print("=" * 60 + "\n")
-
-    return hasil
-
-try:
-
-    result = (
-        supabase
-        .table("bot_state")
-        .select("*")
-        .limit(1)
-        .execute()
-    )
-
-    print("SUPABASE CONNECTED")
-
-except Exception as e:
-
-    print("SUPABASE ERROR:", e)
-
-print("Bot Gempa Indonesia V12.1 berjalan...")
-
-cached_id = load_state("last_id")
-
-print(
-    "LAST ID CACHE:",
-    cached_id
-)
-
-
-# =====================================
-# MODE TEST GEOLOKASI
-# =====================================
-
-TEST_MODE = False
-
-TEST_POINTS = [
-
-    ("Bondowoso",
-     -7.9136,
-     113.8215,
-     "Bondowoso"),
-
-    ("Yogyakarta",
-     -7.8014,
-     110.3647,
-     "Kota Yogyakarta"),
-
-    ("Palu",
-     -0.8917,
-     119.8707,
-     "Palu"),
-
-    ("Laut Banda",
-     -6.3188,
-     130.3692,
-     "Laut Banda"),
-
-    ("Samudra Hindia",
-     -10.3500,
-     109.8000,
-     "Samudra Hindia"),
-
-    ("Laut Flores",
-     -7.8000,
-     121.5000,
-     "Laut Flores"),
-
-    ("Laut Sulawesi",
-     2.0000,
-     122.5000,
-     "Laut Sulawesi"),
-
-    ("Dekat Sulawesi",
-     -1.8500,
-     122.7500,
-     "Sulawesi Tengah"),
-
-    ("Laut Maluku",
-     1.2500,
-     126.3000,
-     "Laut Maluku"),
-
-    ("Halmahera",
-     0.5000,
-     128.5000,
-     "Halmahera Timur"),
-
-]
-
-if TEST_MODE:
-
-    print("\n")
-    print("=" * 80)
-    print("MEMULAI TEST GEOLOKASI")
-    print("=" * 80)
-
-    import time
-
-    pass_count = 0
-    fail_count = 0
-
-    for nama, lat, lon, expected in TEST_POINTS:
-
-        print(f"\n### {nama}")
-    
-        hasil = test_geolokasi(lat, lon)
-    
-        display = hasil["display"]
-    
-        if expected.lower() in display.lower():
-
-            print("EXPECTED :", expected)
-            print("HASIL    :", display)
-            print("STATUS   : PASS")
-        
-            pass_count += 1
-        
-        else:
-        
-            print("EXPECTED :", expected)
-            print("HASIL    :", display)
-            print("STATUS   : FAIL")
-        
-            fail_count += 1
-    
-        time.sleep(2)
-
-    print()
-    print("=" * 80)
-    print("RINGKASAN TEST")
-    print("=" * 80)
-        
-    print("PASS :", pass_count)
-    print("FAIL :", fail_count)
-        
-    total = pass_count + fail_count
-        
-    if total > 0:
-        print(
-            "AKURASI :",
-            f"{(pass_count / total) * 100:.1f}%"
-        )
-
-    print("=" * 80)
-    print("TEST SELESAI")
-    print("=" * 80)
-
-    raise SystemExit("MODE TEST SELESAI")
 
 
 # =====================================
