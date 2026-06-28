@@ -115,6 +115,8 @@ last_data = None
 
 last_event_key = None
 
+cached_id = load_state("last_id")
+
 last_daily_report = None
 
 geo_cache = {}
