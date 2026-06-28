@@ -3,6 +3,10 @@ import os
 import time
 import json
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from geolocation import format_koordinat, lokasi_perairan
 from sea_database import SEA_DATABASE
 from geopy.geocoders import Nominatim
